@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSE312</title>
+    <link rel="stylesheet" type="text/css" href="static/style.css"/>
+</head>
+
+<body onload="welcome()">
+    <h1 id="welcome_user">Welcome!</h1>
+    <div id="notification" class="notification"></div>
+
+    <button id="loginButton" onclick="pageDisplay('loginModal')">Login</button>
+    <button id="registerButton" onclick="pageDisplay('registerModal')">Register</button>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span id="loginClose" class="close"  onclick="closePage('loginModal')">X</span>
+            <h2>Login</h2>
+            <div class="form-container">
+                <form>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required><br>
+
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required><br>
+
+                    <input type="submit" value="Login"onclick="loginAccount(); return false">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span id="registerClose" class="close" onclick="closePage('registerModal')">X</span>
+            <h2>Register</h2>
+            <div class="form-container">
+                <form action="/register">
+                    <label for="newUsername">New Username:</label>
+                    <input type="text" id="newUsername" name="newUsername" required><br>
+
+                    <label for="newPassword">New Password:</label>
+                    <input type="password" id="newPassword" name="newPassword" required><br>
+                    
+                    <input type="submit" value="Rgeister" onclick="registerAccount(); return false">
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="postForm" class="form-container">
+        <h2>Post a post</h2>
+        <form >
+            <label for="postTitle">Title:</label>
+            <input type="text" id="postTitle" name="postTitle"  required><br>
+            <label for="postContent">Description:</label>
+            <textarea id="postContent" rows="4" cols="50" required></textarea><br>
+
+            <input type="submit" value="Post" onclick="makingPost();return false">
+        </form>
+    </div>
+
+    <div id="posts">
+        <h2>Posts</h2>
+        <div id="postList"></div>
+    </div>
+
+    <script src="static/functions.js">
+       
+    </script>
+</body>
+</html>
