@@ -4,6 +4,7 @@ from pymongo import MongoClient
 import bcrypt
 import random
 import html
+import json
 
 
 app = Flask(__name__,template_folder="static")
@@ -116,6 +117,20 @@ def makingPost():
     else:
         response=make_response("Unauthorized",401)
         return response
+    
+@app.route('/showpost', methods = ["GET"])
+def showingPost():
+    posts = []
+    for post in logs_db.find():
+        one_post = {}
+        one_post['username'] = post['username']
+        one_post['title'] = post['title']
+        one_post['content'] = post['content']
+        posts.append(one_post)
+
+    post_json = json.dumps(posts)
+
+    return post_json
 
 @app.route('/name', methods=['GET'])
 def getName():
@@ -137,10 +152,6 @@ def getName():
     else:
         response=make_response("Guest",200)
         return response
-
-
-
-
 
 
 if __name__ == "__main__":

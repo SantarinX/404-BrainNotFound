@@ -126,3 +126,33 @@ function makingPost(){
     request.send(`postTitle=${desription}&postContent=${content}`);
     
 }
+
+function showingPost(){
+    const request = new XMLHttpRequest();
+    request.onload = function () {
+        if (this.status === 200) {
+            //clearPost();
+            const postList = document.getElementById('postList');
+            postList.innerHTML = '';
+            const posts = JSON.parse(this.responseText);
+            //addPostToLists
+            for (const post of posts) {
+                const postElement = document.createElement('div');
+                postElement.innerHTML = postElementHTML(post)
+                postList.appendChild(postElement);
+            }     
+        }
+    }
+    request.open('GET', '/showpost');
+    request.send();
+}
+
+
+function postElementHTML(postsJSON){
+    const username = postsJSON.username;
+    const postTitle = messageJSON.postTitle;
+    const postContent = messageJSON.postContent;
+    postDiv.innerHTML =`<h3>${post.title}</h3><p>${post.content}</p><p>Posted by: ${post.username}</p>`;
+    return postDiv
+}
+
