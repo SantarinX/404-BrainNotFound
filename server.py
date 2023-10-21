@@ -98,8 +98,8 @@ def register():
 def makingPost():
     body = request.form.to_dict()
 
-    title = body["postTitle"]
-    content = body["postContent"]
+    title = html.escape(body["postTitle"])
+    content = html.escpae(body["postContent"])
 
     cookies = request.cookies
     id = cookies.get("id")
@@ -108,7 +108,7 @@ def makingPost():
     if id:
         user = login_info_db.find_one({"id":id })
         if bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
-            username = user["username"]
+            username = html.escape(user["username"])
             id = str(uuid.uuid4())
             logs_db.insert_one({"username": username, "title": title, "content": content, "id": id})
             response=make_response("Success",200)
@@ -120,19 +120,6 @@ def makingPost():
         response=make_response("Unauthorized",401)
         return response
     
-# @app.route('/showpost', methods = ["GET"])
-# def showingPost():
-#     posts = []
-#     for post in logs_db.find():
-#         one_post = {}
-#         one_post['username'] = post['username']
-#         one_post['title'] = post['title']
-#         one_post['content'] = post['content']
-#         posts.append(one_post)
-
-#     post_json = json.dumps(posts)
-
-#     return post_json
 
 @app.route('/post-history', methods = ["GET"])
 def showingPost():

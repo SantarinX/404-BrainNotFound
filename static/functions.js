@@ -155,7 +155,7 @@ function postHTML(postsJSON) {
     // const postTitle = "postTitle";
     // const postContent = "postContent";
 
-    let postHTML = "<br><button onclick='likePost(\"" + postTitle + "\")'>X</button> ";
-    postHTML += "<span class='postblock' id='post" + postTitle + "'><b>" + postTitle + "</b><br>: " + postContent + "<br>" + username + "</span>";
+    let postHTML = "<br><button onclick='likePost(\"" + postTitle + "\")'>Like</button> ";
+    postHTML += "<span class='postblock' id='post" + postTitle + "'><b>" + postTitle + "</b>:<br>" + postContent + "<br>" + username + "</span>";
     return postHTML;
 }
