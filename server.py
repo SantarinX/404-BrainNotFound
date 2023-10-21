@@ -10,7 +10,7 @@ import json
 app = Flask(__name__,template_folder="static")
 
 #REMEMBER TO CHANGE THE DATABASE NAME TO "database"
-client= MongoClient("localhost")
+client= MongoClient("database")
 
 db = client["CSE312Project"]
 
@@ -73,6 +73,7 @@ def login():
         login_info_db.update_one({"username": username}, {"$set": {"auth_token": hashed_token, "id": user_id}})
         response.set_cookie("auth_token", auth_token,max_age=6666,httponly=True)
         response.set_cookie("id", (user_id),max_age=6666,httponly=True)
+        print("Login successful\n")
         return response
     else:
         response=make_response("Wrong password",404)
@@ -89,6 +90,7 @@ def register():
     hashed_password = bcrypt.hashpw(password.encode(), salt)
     login_info_db.insert_one({"username": username, "password": hashed_password})
     response=make_response("Success",200)
+    print("Register successful\n")
     return response
 
 
@@ -118,7 +120,21 @@ def makingPost():
         response=make_response("Unauthorized",401)
         return response
     
-@app.route('/showpost', methods = ["GET"])
+# @app.route('/showpost', methods = ["GET"])
+# def showingPost():
+#     posts = []
+#     for post in logs_db.find():
+#         one_post = {}
+#         one_post['username'] = post['username']
+#         one_post['title'] = post['title']
+#         one_post['content'] = post['content']
+#         posts.append(one_post)
+
+#     post_json = json.dumps(posts)
+
+#     return post_json
+
+@app.route('/post-history', methods = ["GET"])
 def showingPost():
     posts = []
     for post in logs_db.find():
@@ -130,6 +146,9 @@ def showingPost():
 
     post_json = json.dumps(posts)
 
+    response=make_response(post_json, 200)
+    
+    print("response: ", response)
     return post_json
 
 @app.route('/name', methods=['GET'])

@@ -93,3 +93,8 @@ input[type="submit"] {
     text-align: center;
     padding: 10px;
 }
+
+#postList {
+    display: flex;
+    flex-direction: row;
+}
