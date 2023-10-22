@@ -68,6 +68,7 @@ def login():
         username=html.escape(username)
         response=make_response(username,200)
         auth_token = str(random.randint(0, 999999))
+        # hash token
         hashed_token = bcrypt.hashpw(auth_token.encode(), bcrypt.gensalt())
         user_id =str(uuid.uuid4())
         login_info_db.update_one({"username": username}, {"$set": {"auth_token": hashed_token, "id": user_id}})
@@ -87,6 +88,7 @@ def register():
     body = request.form.to_dict()
     username = body["newUsername"]
     password = body["newPassword"]
+    # hash password
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode(), salt)
     login_info_db.insert_one({"username": username, "password": hashed_password})
@@ -98,7 +100,7 @@ def register():
 @app.route('/post', methods=['POST'])
 def makingPost():
     body = request.form.to_dict()
-
+    # escape html for post title and content
     title = html.escape(body["postTitle"])
     content = html.escape(body["postContent"])
     if len(title) == 0 or len(content) == 0:
@@ -113,6 +115,7 @@ def makingPost():
     if id:
         user = login_info_db.find_one({"id":id })
         if bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
+            # escape html for username
             username = html.escape(user["username"])
             id = str(uuid.uuid4())
             # Check start
@@ -194,6 +197,7 @@ def likePost():
             return response
         else:
             response=make_response("Already liked", 403)
+            response.status="Already liked"
             response.headers["X-Content-Type-Options"] = "nosniff"
             return response
 
@@ -217,6 +221,7 @@ def unlikePost():
             return response
         else:
             response=make_response("Not liked before", 403)
+            response.status="Not liked before"
             response.headers["X-Content-Type-Options"] = "nosniff"
             return response
 # Check end
