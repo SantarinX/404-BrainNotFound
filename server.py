@@ -110,7 +110,9 @@ def makingPost():
         if bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
             username = html.escape(user["username"])
             id = str(uuid.uuid4())
-            logs_db.insert_one({"username": username, "title": title, "content": content, "id": id})
+            # Check start
+            logs_db.insert_one({"username": username, "title": title, "content": content, "id": id, "likes": []})
+            # Check end
             response=make_response("Success",200)
             return response
         else:
@@ -158,6 +160,41 @@ def getName():
     else:
         response=make_response("Guest",200)
         return response
+
+# Check start
+@app.route('/like-post', methods=['POST'])
+def likePost():
+    body = request.form.to_dict()
+    post_id = body["post_id"]
+
+    cookies = request.cookies
+    user_id = cookies.get("id")
+
+    post = logs_db.find_one({"id": post_id})
+
+    if user_id not in post["likes"]:
+        logs_db.update_one({"id": post_id}, {"$push": {"likes": user_id}})
+        return make_response("Liked", 200)
+    else:
+        return make_response("Already liked", 403)
+
+
+@app.route('/unlike-post', methods=['POST'])
+def unlikePost():
+    body = request.form.to_dict()
+    post_id = body["post_id"]
+
+    cookies = request.cookies
+    user_id = cookies.get("id")
+
+    post = logs_db.find_one({"id": post_id})
+
+    if user_id in post["likes"]:
+        logs_db.update_one({"id": post_id}, {"$pull": {"likes": user_id}})
+        return make_response("Unliked", 200)
+    else:
+        return make_response("Not liked before", 403)
+# Check end
 
 
 if __name__ == "__main__":
