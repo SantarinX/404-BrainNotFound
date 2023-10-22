@@ -131,6 +131,8 @@ def showingPost():
         one_post['username'] = post['username']
         one_post['title'] = post['title']
         one_post['content'] = post['content']
+        one_post['id'] = post['id']
+        one_post['likes'] = post['likes']
         posts.append(one_post)
 
     post_json = json.dumps(posts)
@@ -165,7 +167,7 @@ def getName():
 @app.route('/like-post', methods=['POST'])
 def likePost():
     body = request.form.to_dict()
-    post_id = body["post_id"]
+    post_id = body["id"]
 
     cookies = request.cookies
     user_id = cookies.get("id")
@@ -182,7 +184,7 @@ def likePost():
 @app.route('/unlike-post', methods=['POST'])
 def unlikePost():
     body = request.form.to_dict()
-    post_id = body["post_id"]
+    post_id = body["id"]
 
     cookies = request.cookies
     user_id = cookies.get("id")

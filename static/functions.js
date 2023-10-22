@@ -150,48 +150,44 @@ function postHTML(postsJSON) {
     const username = postsJSON.username;
     const postTitle = postsJSON.title;
     const postContent = postsJSON.content;
-    // Check start //
     const likesCount = postsJSON.likes.length;
-    // Check end //
+    
+    
+
     // const username = "username";
     // const postTitle = "postTitle";
     // const postContent = "postContent";
 
-    // Check start //
-    let postHTML = "<br><button onclick='likePost(\"" + postTitle + "\")'>Like (" + likesCount + ")</button> ";
-    // Check end //
+    let postHTML = "<br><button onclick='likePost(\"" + postsJSON.id + "\")'>Like (" + likesCount + ")</button> ";
+    postHTML += "<span class='postblock' id='post" + postTitle + "'><b>" + postTitle + "</b>:<br>" + postContent + "<br>" + username + "</span>";
     return postHTML;
 }
-
-// Check start //
 function likePost(postTitle) {
   const request = new XMLHttpRequest();
 
   request.onload = function () {
-    if (request.status === 200) {
-      updatePost();
-    } else if (request.status === 403) {
-      unlikePost(postTitle);
-    }
+      if (request.status === 200) {
+          updatePost();
+      } else if (request.status === 403) {
+          unlikePost(postTitle);
+      }
   };
 
   request.open("POST", "/like-post");
   request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  request.send(`postTitle=${postTitle}`);
+  request.send(`id=${postTitle}`);
 }
 
 function unlikePost(postTitle) {
   const request = new XMLHttpRequest();
 
   request.onload = function () {
-    if (request.status === 200) {
-      updatePost();
-    }
+      if (request.status === 200) {
+          updatePost();
+      }
   };
 
   request.open("POST", "/unlike-post");
   request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  request.send(`postTitle=${postTitle}`);
+  request.send(`id=${postTitle}`);
 }
-
-// Check end //
