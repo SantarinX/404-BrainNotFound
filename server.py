@@ -101,6 +101,10 @@ def makingPost():
 
     title = html.escape(body["postTitle"])
     content = html.escape(body["postContent"])
+    if len(title) == 0 or len(content) == 0:
+        response=make_response("Empty title or content",403)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
     cookies = request.cookies
     id = cookies.get("id")
