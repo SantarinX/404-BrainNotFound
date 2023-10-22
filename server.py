@@ -10,7 +10,7 @@ import json
 app = Flask(__name__,template_folder="static")
 
 #REMEMBER TO CHANGE THE DATABASE NAME TO "database"
-client= MongoClient("localhost")
+client= MongoClient("database")
 
 db = client["CSE312Project"]
 
@@ -171,15 +171,17 @@ def likePost():
 
     cookies = request.cookies
     user_id = cookies.get("id")
+    
+    user = login_info_db.find_one({"id": user_id})
+    if user is not None:
 
-    post = logs_db.find_one({"id": post_id})
+        post = logs_db.find_one({"id": post_id})
 
-    if user_id not in post["likes"]:
-        logs_db.update_one({"id": post_id}, {"$push": {"likes": user_id}})
-        return make_response("Liked", 200)
-    else:
-        return make_response("Already liked", 403)
-
+        if user_id not in post["likes"]:
+            logs_db.update_one({"id": post_id}, {"$push": {"likes": user_id}})
+            return make_response("Liked", 200)
+        else:
+            return make_response("Already liked", 403)
 
 @app.route('/unlike-post', methods=['POST'])
 def unlikePost():
@@ -189,15 +191,17 @@ def unlikePost():
     cookies = request.cookies
     user_id = cookies.get("id")
 
-    post = logs_db.find_one({"id": post_id})
+    user = login_info_db.find_one({"id": user_id})
+    if user is not None:
 
-    if user_id in post["likes"]:
-        logs_db.update_one({"id": post_id}, {"$pull": {"likes": user_id}})
-        return make_response("Unliked", 200)
-    else:
-        return make_response("Not liked before", 403)
+        post = logs_db.find_one({"id": post_id})
+
+        if user_id in post["likes"]:
+            logs_db.update_one({"id": post_id}, {"$pull": {"likes": user_id}})
+            return make_response("Unliked", 200)
+        else:
+            return make_response("Not liked before", 403)
 # Check end
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
