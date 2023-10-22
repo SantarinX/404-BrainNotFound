@@ -73,10 +73,11 @@ def login():
         login_info_db.update_one({"username": username}, {"$set": {"auth_token": hashed_token, "id": user_id}})
         response.set_cookie("auth_token", auth_token,max_age=6666,httponly=True)
         response.set_cookie("id", (user_id),max_age=6666,httponly=True)
-        print("Login successful\n")
+        response.headers["X-Content-Type-Options"] = "nosniff"
         return response
     else:
         response=make_response("Wrong password",404)
+        response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
 
@@ -90,7 +91,7 @@ def register():
     hashed_password = bcrypt.hashpw(password.encode(), salt)
     login_info_db.insert_one({"username": username, "password": hashed_password})
     response=make_response("Success",200)
-    print("Register successful\n")
+    response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 
 
@@ -114,12 +115,15 @@ def makingPost():
             logs_db.insert_one({"username": username, "title": title, "content": content, "id": id, "likes": []})
             # Check end
             response=make_response("Success",200)
+            response.headers["X-Content-Type-Options"] = "nosniff"
             return response
         else:
             response=make_response("Unauthorized",401)
+            response.headers["X-Content-Type-Options"] = "nosniff"
             return response
     else:
         response=make_response("Unauthorized",401)
+        response.headers["X-Content-Type-Options"] = "nosniff"
         return response
     
 
@@ -138,9 +142,9 @@ def showingPost():
     post_json = json.dumps(posts)
 
     response=make_response(post_json, 200)
+    response.headers["X-Content-Type-Options"] = "nosniff"
     
-    print("response: ", response)
-    return post_json
+    return response
 
 @app.route('/name', methods=['GET'])
 def getName():
@@ -158,9 +162,11 @@ def getName():
             username = "Guest"
         
         response=make_response(username,200)
+        response.headers["X-Content-Type-Options"] = "nosniff"
         return response
     else:
         response=make_response("Guest",200)
+        response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
 # Check start
@@ -179,9 +185,13 @@ def likePost():
 
         if user_id not in post["likes"]:
             logs_db.update_one({"id": post_id}, {"$push": {"likes": user_id}})
-            return make_response("Liked", 200)
+            response=make_response("Liked", 200)
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            return response
         else:
-            return make_response("Already liked", 403)
+            response=make_response("Already liked", 403)
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            return response
 
 @app.route('/unlike-post', methods=['POST'])
 def unlikePost():
@@ -198,9 +208,13 @@ def unlikePost():
 
         if user_id in post["likes"]:
             logs_db.update_one({"id": post_id}, {"$pull": {"likes": user_id}})
-            return make_response("Unliked", 200)
+            response=make_response("Unliked", 200)
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            return response
         else:
-            return make_response("Not liked before", 403)
+            response=make_response("Not liked before", 403)
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            return response
 # Check end
 
 if __name__ == "__main__":
