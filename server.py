@@ -10,7 +10,7 @@ import json
 app = Flask(__name__,template_folder="static")
 
 #REMEMBER TO CHANGE THE DATABASE NAME TO "database"
-client= MongoClient("database")
+client= MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -99,7 +99,7 @@ def makingPost():
     body = request.form.to_dict()
 
     title = html.escape(body["postTitle"])
-    content = html.escpae(body["postContent"])
+    content = html.escape(body["postContent"])
 
     cookies = request.cookies
     id = cookies.get("id")
