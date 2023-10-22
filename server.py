@@ -184,7 +184,7 @@ def likePost():
 
     cookies = request.cookies
     user_id = cookies.get("id")
-    
+
     user = login_info_db.find_one({"id": user_id})
     if user is not None:
 
@@ -200,6 +200,11 @@ def likePost():
             response.status="Already liked"
             response.headers["X-Content-Type-Options"] = "nosniff"
             return response
+    else:
+        response=make_response("UserId Not Found", 403)
+        response.status="UserId Not Found"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
 @app.route('/unlike-post', methods=['POST'])
 def unlikePost():
@@ -224,6 +229,11 @@ def unlikePost():
             response.status="Not liked before"
             response.headers["X-Content-Type-Options"] = "nosniff"
             return response
+    else:
+        response=make_response("UserId Not Found", 403)
+        response.status="UserId Not Found"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 # Check end
 
 if __name__ == "__main__":
