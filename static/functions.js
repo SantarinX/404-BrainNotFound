@@ -109,6 +109,7 @@ function makingPost() {
       showNotification("Post Successfully", true);
       document.getElementById("postTitle").value = "";
       document.getElementById("postContent").value = "";
+      updatePost();
     } else {
       showNotification("Post Failed", false);
     }
@@ -156,8 +157,14 @@ function postHTML(postsJSON) {
     // const postTitle = "postTitle";
     // const postContent = "postContent";
 
-    let postHTML = "<div style='border: thin solid black'><br><button id=" + postsJSON.id + " onclick='likePost(\"" + postsJSON.id + "\")'>Like (" + likesCount + ")</button> ";
-    postHTML += "<span class='postblock' id='post" + postTitle + "'><b>" + postTitle + "</b>:<br>" + postContent + "<br>" + username + "</span></div>";
+    // let postHTML = "<div style='border: thin solid black'><br><button id=" + postsJSON.id + " onclick='likePost(\"" + postsJSON.id + "\")'>Like (" + likesCount + ")</button> ";
+    // postHTML += "<span class='postblock' id='post" + postTitle + "'><b>" + postTitle + "</b>:<br>" + postContent + "<br>" + username + "</span></div>";
+    let postHTML = `<div class="post">
+                    <h2>${postTitle}</h3>
+                    <div class="description">${postContent}</div>
+                    <p>By: ${username}</p>
+                    <button class="like-button" onclick="likePost('${postsJSON.id}')">like(${likesCount})</button>
+                </div>`;
     return postHTML;
 }
 

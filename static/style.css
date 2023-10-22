@@ -1,8 +1,8 @@
+
 body {
     font-family: Arial, sans-serif;
     background-color: #f0f0f0;
     margin: 0;
-    padding: 0;
     text-align: center;
 }
 
@@ -95,6 +95,63 @@ input[type="submit"] {
 }
 
 #postList {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 250px);
+}
+.post {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    background-color: #b9b9b9;
+    padding: 15px;
+    border: 1px solid #ffffff;
+    border-radius: 15px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    word-wrap: break-word;
+    margin-top: 20px;
+}
+
+.post h2 {
+    font-size: 1.5em;
+    color: #000000;
+    margin-bottom: 10px;
+    margin-top: -0px;
+    
+}
+
+.post p {
+    font-size: 0.5em;
+    position: absolute;
+    bottom: 10px;
+}
+
+.post .description {
+    font-size: 1.1em;
+    color: #333;
+    max-height: 80px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc #f0f0f0;
+}
+
+.post .description::-webkit-scrollbar {
+    width: 5px;
+}
+
+.post .description::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 5px;
+}
+
+.post .description::-webkit-scrollbar-track {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+}
+
+.like-button {
+    position: absolute;
+    bottom: 3px;
+    right: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
 }
