@@ -142,8 +142,8 @@ function clearPost() {
 function addPostToBlock(messageJSON) {
     const postBlocks = document.getElementById("postList");
     postBlocks.innerHTML += postHTML(messageJSON);
-    postBlocks.scrollIntoView(false);
-    postBlocks.scrollTop = postBlocks.scrollHeight - postBlocks.clientHeight;
+    // postBlocks.scrollIntoView(false);
+    // postBlocks.scrollTop = postBlocks.scrollHeight - postBlocks.clientHeight;
 }
 
 function postHTML(postsJSON) {

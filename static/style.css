@@ -96,7 +96,7 @@ input[type="submit"] {
 
 #postList {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 250px);
+    grid-template-columns: repeat(auto-fill, 250px);  
 }
 .post {
     position: relative;
