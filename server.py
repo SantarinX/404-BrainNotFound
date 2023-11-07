@@ -1,10 +1,12 @@
 from flask import Flask, request, make_response, render_template
-import uuid
-from pymongo import MongoClient
 import bcrypt
 import random
 import html
 import json
+import os
+from pymongo import MongoClient
+import uuid
+import datetime
 
 
 app = Flask(__name__,template_folder="static")
@@ -12,21 +14,33 @@ app = Flask(__name__,template_folder="static")
 #REMEMBER TO CHANGE THE DATABASE NAME TO "database"
 client= MongoClient("database")
 
+client= MongoClient("localhost")
+
 db = client["CSE312Project"]
 
-logs_db = db["logs"]
+auctionList_db = db["auctionList"]
 login_info_db= db["login"]
 
 MIME_TYPES = {
-    'html': 'text/html',
-    'css': 'text/css',
-    'js': 'text/javascript',
-    'jpg': 'image/jpeg',
-    'ico': 'image/vnd.microsoft.icon',
-    'json': 'application/json',
-    'png': 'image/png'
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'text/javascript',
+    '.jpg': 'image/jpeg',
+    '.ico': 'image/vnd.microsoft.icon',
+    '.json': 'application/json',
+    '.png': 'image/png'
 }
 
+def isAuthenticated(Request):
+    cookies = Request.cookies
+    id = cookies.get("id")
+    auth_token = cookies.get("auth_token")
+    
+    if id and auth_token:
+        user = login_info_db.find_one({"id": id})
+        if user and bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
+            return True
+    return False
 
 @app.route("/")
 def response():
@@ -36,9 +50,15 @@ def response():
     return new_response
 
 
-@app.route('/static/<path>')
-def static_files(path):
-    full_path = '.'+"/static/" + path
+@app.route('/static/<subpath>')
+def static_files(subpath):
+    path = os.path.normpath(subpath)
+
+    full_path = './static/' + path
+
+    if not os.path.exists(full_path) or not full_path.startswith('./static'):
+        return make_response("File not found", 404)
+    
     with open(full_path, "rb") as f:
         data = f.read()
     f.close()
@@ -46,13 +66,18 @@ def static_files(path):
     new_response = make_response(data)
     new_response.headers["X-Content-Type-Options"] = "nosniff"
 
+    file_type = MIME_TYPES[path[path.rfind('.'):]]
+
+    if file_type is None:
+        return make_response("File not found", 404)
+    
     if path.endswith(".css") or path.endswith('.js'):
-        file_type = MIME_TYPES[path.split('.')[-1]]
         new_response.headers["Content-Type"] =file_type+"; charset=utf-8"
-        return new_response
+
     else:
-        new_response.headers["Content-Type"] = MIME_TYPES[path.split('.')[-1]]
-        return new_response
+        new_response.headers["Content-Type"] =file_type
+
+    return new_response
     
 @app.route('/login', methods=['POST'])
 def login():
@@ -96,54 +121,23 @@ def register():
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 
-
-@app.route('/post', methods=['POST'])
-def makingPost():
-    body = request.form.to_dict()
-    # escape html for post title and content
-    title = html.escape(body["postTitle"])
-    content = html.escape(body["postContent"])
-    if len(title) == 0 or len(content) == 0:
-        response=make_response("Empty title or content",403)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        return response
-
-    cookies = request.cookies
-    id = cookies.get("id")
-    auth_token = cookies.get("auth_token") 
-
-    if id:
-        user = login_info_db.find_one({"id":id })
-        if bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
-            # escape html for username
-            username = html.escape(user["username"])
-            id = str(uuid.uuid4())
-            # Check start
-            logs_db.insert_one({"username": username, "title": title, "content": content, "id": id, "likes": []})
-            # Check end
-            response=make_response("Success",200)
-            response.headers["X-Content-Type-Options"] = "nosniff"
-            return response
-        else:
-            response=make_response("Unauthorized",401)
-            response.headers["X-Content-Type-Options"] = "nosniff"
-            return response
-    else:
-        response=make_response("Unauthorized",401)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        return response
     
 
 @app.route('/post-history', methods = ["GET"])
 def showingPost():
     posts = []
-    for post in logs_db.find():
+    for post in auctionList_db.find():
         one_post = {}
-        one_post['username'] = post['username']
         one_post['title'] = post['title']
-        one_post['content'] = post['content']
+        one_post['description'] = post['description']
+        one_post['image'] = post['image']
+        one_post['price'] = post['price']
+        one_post['imageURI'] = post['imageURI']
+        one_post['duration'] = post['duration']
+        one_post['owner'] = post['owner']
         one_post['id'] = post['id']
-        one_post['likes'] = post['likes']
+        one_post['bids'] = post['bids']
+        
         posts.append(one_post)
 
     post_json = json.dumps(posts)
@@ -155,86 +149,94 @@ def showingPost():
 
 @app.route('/name', methods=['GET'])
 def getName():
-    cookies = request.cookies
-    id = cookies.get("id")
-    auth_token = cookies.get("auth_token")
-    if id:
-        user = login_info_db.find_one({"id": id})
-        if user:
-            if bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
-                username = html.escape(user["username"])
-            else:
-                username = "Guest"
-        else:
-            username = "Guest"
+    if isAuthenticated(request):
+        user = login_info_db.find_one({"id": request.cookies.get("id")})
+
+        username = html.escape(user["username"])
+        response = make_response(username, 200)
+
+    else:
+        response = make_response("Guest", 200)
+    
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+
+@app.route('/auction', methods=['POST'])
+def saveAuction():
+    if isAuthenticated(request):
+        if 'image' not in request.files:
+            response = make_response(("noImage", 404))
+            return response
         
-        response=make_response(username,200)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        return response
-    else:
-        response=make_response("Guest",200)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        return response
+        file = request.files['image']
+        suffix=file.filename[file.filename.rfind('.'):]
+        file_type= MIME_TYPES.get(suffix, None)
 
-# Check start
-@app.route('/like-post', methods=['POST'])
-def likePost():
-    body = request.form.to_dict()
-    post_id = body["id"]
+        if file_type is not None:
+            user = login_info_db.find_one({"id": request.cookies.get("id")})
+            username = html.escape(user["username"])
 
-    cookies = request.cookies
-    user_id = cookies.get("id")
+            filename = username+file.filename.replace("../", "_").replace(" ", "_")
 
-    user = login_info_db.find_one({"id": user_id})
-    if user is not None:
+            if not os.path.exists(f'./static/images/{username}'):
+                os.makedirs(f'./static/images/{username}')
 
-        post = logs_db.find_one({"id": post_id})
+            file.save(os.path.join('static/images/'+username, filename))
 
-        if user_id not in post["likes"]:
-            logs_db.update_one({"id": post_id}, {"$push": {"likes": user_id}})
-            response=make_response("Liked", 200)
-            response.headers["X-Content-Type-Options"] = "nosniff"
+            itemTitle = request.form['title']
+            itemDescription = request.form['description']
+            itemPrice = request.form['price']
+            itemImage = filename
+            imageURI = f'./static/images/{username}/{filename}'
+            id = str(uuid.uuid4())
+            auctionEnd = datetime.datetime.now() + datetime.timedelta(hours=int(request.form['duration']))
+            auctionEnd = auctionEnd.strftime("%m-%d-%Y %H:%M:%S")
+            owner = username
+
+
+            auctionList_db.insert_one({"owner":owner,"id":id,"imageURI":imageURI, "title": itemTitle, "description": itemDescription, "price": itemPrice, "image": itemImage, "duration": auctionEnd, "bids": {}})
+
+            response = make_response(("success", 200))
             return response
         else:
-            response=make_response("Already liked", 403)
-            response.status="Already liked"
-            response.headers["X-Content-Type-Options"] = "nosniff"
+            response = make_response(("wrongFileType", 404))
             return response
+    
     else:
-        response=make_response("UserId Not Found", 403)
-        response.status="UserId Not Found"
-        response.headers["X-Content-Type-Options"] = "nosniff"
+        response = make_response(("notAuthenticated", 404))
         return response
 
-@app.route('/unlike-post', methods=['POST'])
-def unlikePost():
-    body = request.form.to_dict()
-    post_id = body["id"]
-
-    cookies = request.cookies
-    user_id = cookies.get("id")
-
-    user = login_info_db.find_one({"id": user_id})
-    if user is not None:
-
-        post = logs_db.find_one({"id": post_id})
-
-        if user_id in post["likes"]:
-            logs_db.update_one({"id": post_id}, {"$pull": {"likes": user_id}})
-            response=make_response("Unliked", 200)
-            response.headers["X-Content-Type-Options"] = "nosniff"
-            return response
-        else:
-            response=make_response("Not liked before", 403)
-            response.status="Not liked before"
-            response.headers["X-Content-Type-Options"] = "nosniff"
-            return response
-    else:
-        response=make_response("UserId Not Found", 403)
-        response.status="UserId Not Found"
-        response.headers["X-Content-Type-Options"] = "nosniff"
+@app.route('/bid', methods=['POST'])
+def addBid():
+    if not isAuthenticated(request):
+        response = make_response(("notAuthenticated", 404))
         return response
-# Check end
+    
+    value=int(request.form['bid'])
+    id=request.form['id']
+    owner=request.form['owner']
+
+    user = login_info_db.find_one({"id": request.cookies.get("id")})
+    username = html.escape(user["username"])
+
+    if owner==username:
+        response = make_response(("owner", 402))
+        return response
+    
+    auctionItem = auctionList_db.find_one({"id": id})
+
+    #Blow is not finished, need to check if the bid is higher than the current bid
+    auctionList=auctionItem['bids']
+    auctionList[username]=value
+
+    auctionList_db.update_one({"id": id}, {"$set": {"bids": auctionList}})
+    
+    response = make_response(("success", 200))
+    return response
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

@@ -26,8 +26,9 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required><br>
 
-                    <input type="submit" value="Login"onclick="loginAccount(); return false">
+                    <input type="submit" value="Login" onclick="loginAccount(); return false">
                 </form>
+
             </div>
         </div>
     </div>
@@ -37,7 +38,7 @@
             <span id="registerClose" class="close" onclick="closePage('registerModal')">X</span>
             <h2>Register</h2>
             <div class="form-container">
-                <form action="/register">
+                <form>
                     <label for="newUsername">New Username:</label>
                     <input type="text" id="newUsername" name="newUsername" required><br>
 
@@ -46,28 +47,65 @@
                     
                     <input type="submit" value="Rgeister" onclick="registerAccount(); return false">
                 </form>
+
             </div>
         </div>
     </div>
 
+    <button id="createAuctionButton" onclick="pageDisplay('auctionModal')">Create Auction</button>
 
+    <div id="auctionModal" class="modal">
+        <div class="modal-content" id="auction-modal">
+            <span id="registerClose" class="close" onclick="closePage('auctionModal')">X</span>
+            <h2>Create Auction</h2>
+            <div class="form-container">
 
-    <div id="postForm" class="form-container">
-        <h2>Post a post</h2>
-        <form >
-            <label for="postTitle">Title:</label>
-            <input type="text" id="postTitle" name="postTitle"  required><br>
-            <label for="postContent">Description:</label>
-            <textarea id="postContent" rows="4" cols="50" required></textarea><br>
+                <form id="auctionForm" enctype="multipart/form-data">
+                    <label for="itemName">Item Name:</label>
+                    <input type="text" id="auctionTitle" name="itemName" required><br>
+                    
+                    <label for="auctionDescription">Item Description:</label>
+                    <textarea id="auctionDescription" name="auctionDescription" rows="4" cols="50" required></textarea><br>
+                
+                    <label for="auctionImage">Upload Image:</label>
+                    <input type="file" id="auctionImage" name="auctionImage" required><br>
+                    
+                    <label for="startingPrice">Starting Price ($):</label>
+                    <input type="number" id="startingPrice" name="startingPrice" required min="0"><br>
+                    
+                    <label for="auctionDuration">Auction Duration (hours):</label>
+                    <input type="number" id="auctionDuration" name="auctionDuration" required min="1"><br>
+                
+                    <input type="submit" name="submit" onclick="postAuction(); return false">
+                </form>
+                
+            </div>
+        </div>
+    </div>
 
-            <input type="submit" value="Post" onclick="makingPost();return false">
-        </form>
+    <div id="bidModal" class="modal">
+        <div class="modal-content">
+            <span id="bidClose" class="close" onclick="closePage('bidModal')">X</span>
+            <h2>Bidding</h2>
+            <div class="form-container">
+
+                <form id="bidForm" enctype="multipart/form-data">
+                    <label for="biddingPrice">Bidding Price($)</label>
+                    <input type="number" id="bidPrice" name="biddingPrice" required min="1"><br>
+                
+                    <input type="submit" name="submit" onclick="bidAuction(); return false">
+                </form>
+
+            </div>
+        </div>
     </div>
 
     <div id="posts">
-        <h2>Posts</h2>
+        <h2>Active Auctions</h2>
         <div id="postList"></div>
     </div>
+
+    
 
     <script src="static/functions.js">
        

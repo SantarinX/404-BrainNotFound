@@ -92,66 +92,80 @@ input[type="submit"] {
     color: #fff;
     text-align: center;
     padding: 10px;
+    z-index: 9999;
 }
 
 #postList {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 250px);  
-}
-.post {
-    position: relative;
-    width: 200px;
-    height: 150px;
-    background-color: #b9b9b9;
-    padding: 15px;
-    border: 1px solid #ffffff;
-    border-radius: 15px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-    word-wrap: break-word;
-    margin-top: 20px;
-}
-
-.post h2 {
-    font-size: 1.5em;
-    color: #000000;
-    margin-bottom: 10px;
-    margin-top: -0px;
+    grid-template-columns: repeat(auto-fill, 250px); 
     
 }
 
-.post p {
-    font-size: 0.5em;
-    position: absolute;
-    bottom: 10px;
+.auction {
+    position: relative;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: left;
 }
 
-.post .description {
-    font-size: 1.1em;
-    color: #333;
-    max-height: 80px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #ccc #f0f0f0;
+.auction img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
 }
 
-.post .description::-webkit-scrollbar {
-    width: 5px;
-}
-
-.post .description::-webkit-scrollbar-thumb {
-    background-color: #ccc;
+.auction-modal{
+    background-color: #fff;
+    margin: 5% auto; 
+    padding: 20px;
+    width: 80%;
+    max-width: 600px; 
     border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.post .description::-webkit-scrollbar-track {
-    background-color: #f0f0f0;
-    border-radius: 5px;
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
 }
 
-.like-button {
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.form-container label {
+    display: block;
+    margin: 10px 0 5px; 
+}
+
+#auctionTitle,
+#auctionDescription,
+#auctionImage,
+#auctionDuration,
+#bidPrice,
+#startingPrice{
+    width: 95%; 
+    padding: 10px;
+    margin-bottom: 15px; 
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.bid-button {
     position: absolute;
     bottom: 3px;
     right: 10px;
     padding: 5px 10px;
     border-radius: 5px;
 }
+
+

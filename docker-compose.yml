@@ -5,7 +5,7 @@ services:
     ports:
       - '27017:27017'
   
-  part2:
+  project2:
     build: .
     environment:
       - WAIT_HOST=mongo:27017

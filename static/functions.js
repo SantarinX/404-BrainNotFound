@@ -26,7 +26,7 @@ function get_username() {
 function welcome() {
   get_username();
   updatePost();
-  setInterval(updatePost, 2000);
+  // setInterval(updatePost, 2000);
 }
 
 window.addEventListener("click", (event) => {
@@ -36,6 +36,12 @@ window.addEventListener("click", (event) => {
 
   if (event.target === registerModal) {
     registerModal.style.display = "none";
+  }
+  if (event.target === auctionModal) {
+    auctionModal.style.display = "none";
+  }
+  if (event.target === bidModal) {
+    bidModal.style.display = "none";
   }
 });
 
@@ -52,6 +58,11 @@ function showNotification(message, isSuccess) {
 function registerAccount() {
   const username = document.getElementById("newUsername").value;
   const password = document.getElementById("newPassword").value;
+
+  if(username === "" || password === ""){
+    showNotification("Username or Password cannot be empty", false);
+    return;
+  }
 
   const request = new XMLHttpRequest();
 
@@ -74,6 +85,11 @@ function registerAccount() {
 function loginAccount() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
+
+  if(username === "" || password === ""){
+    showNotification("Username or Password cannot be empty", false);
+    return;
+  }
 
   const request = new XMLHttpRequest();
 
@@ -98,27 +114,6 @@ function loginAccount() {
   request.send(`username=${username}&password=${password}`);
 }
 
-function makingPost() {
-  const desription = document.getElementById("postTitle").value;
-  const content = document.getElementById("postContent").value;
-
-  const request = new XMLHttpRequest();
-
-  request.onload = function () {
-    if (request.status === 200) {
-      showNotification("Post Successfully", true);
-      document.getElementById("postTitle").value = "";
-      document.getElementById("postContent").value = "";
-      updatePost();
-    } else {
-      showNotification("Post Failed", false);
-    }
-  };
-  request.open("POST", "/post");
-  request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  request.send(`postTitle=${desription}&postContent=${content}`);
-}
-
 function updatePost() {
   const request = new XMLHttpRequest();
   request.onreadystatechange = function () {
@@ -126,7 +121,7 @@ function updatePost() {
       clearPost();
       const messages = JSON.parse(this.response);
       for (const message of messages) {
-        addPostToBlock(message);
+        addToPostList(message);
       }
     }
   };
@@ -139,61 +134,92 @@ function clearPost() {
   chatMessages.innerHTML = "";
 }
 
-function addPostToBlock(messageJSON) {
-    const postBlocks = document.getElementById("postList");
-    postBlocks.innerHTML += postHTML(messageJSON);
-    // postBlocks.scrollIntoView(false);
-    // postBlocks.scrollTop = postBlocks.scrollHeight - postBlocks.clientHeight;
+function addToPostList(auctionData) {
+  var postList = document.getElementById('postList');
+  var auctionItem = document.createElement('div');
+  auctionItem.className = 'auction';
+
+  var html = `
+      <h3>${auctionData.title}</h3>
+      <p>${auctionData.description}</p>
+      <img src="${auctionData.imageURI}" alt="Auction Image">
+      <p>Starting Price: $${auctionData.price}</p>
+      <p>Auction Ends at: ${auctionData.duration} </p>
+      <input id=bidId value="${auctionData.id}" hidden>
+      <input id=auctionOwner value="${auctionData.owner}" hidden>
+      <button class="bid-button" onclick="pageDisplay('bidModal')">Bid</button>
+  `;
+
+  auctionItem.innerHTML = html;
+  postList.appendChild(auctionItem);
 }
 
-function postHTML(postsJSON) {
 
-    const username = postsJSON.username;
-    const postTitle = postsJSON.title;
-    const postContent = postsJSON.content;
-    const likesCount = postsJSON.likes.length;
-    
-    // const username = "username";
-    // const postTitle = "postTitle";
-    // const postContent = "postContent";
 
-    // let postHTML = "<div style='border: thin solid black'><br><button id=" + postsJSON.id + " onclick='likePost(\"" + postsJSON.id + "\")'>Like (" + likesCount + ")</button> ";
-    // postHTML += "<span class='postblock' id='post" + postTitle + "'><b>" + postTitle + "</b>:<br>" + postContent + "<br>" + username + "</span></div>";
-    let postHTML = `<div class="post">
-                    <h2>${postTitle}</h3>
-                    <div class="description">${postContent}</div>
-                    <p>By: ${username}</p>
-                    <button class="like-button" onclick="likePost('${postsJSON.id}')">like(${likesCount})</button>
-                </div>`;
-    return postHTML;
-}
+function postAuction(){
+  const title = document.getElementById("auctionTitle").value;
+  const description = document.getElementById("auctionDescription").value;
+  const image = document.getElementById("auctionImage").files[0];
+  const price = document.getElementById("startingPrice").value;
+  const time = document.getElementById("auctionDuration").value;
 
-function likePost(postId) {
+  var formData = new FormData();
+
+  formData.append("title", title);
+  formData.append("description", description);
+  formData.append("image", image);
+  formData.append("price", price);
+  formData.append("duration", time);
+
   const request = new XMLHttpRequest();
 
-  request.onload = function () {
-      if (request.status === 200) {
-          updatePost();
-      } else if (request.status === 403) {
-          unlikePost(postId);
-      }
-  };
+  request.open("POST", "/auction");
+  request.send(formData);
 
-  request.open("POST", "/like-post");
-  request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  request.send(`id=${postId}`);
-}
-
-function unlikePost(postId) {
-  const request = new XMLHttpRequest();
-
-  request.onload = function () {
+  request.onreadystatechange = function () { 
     if (request.status === 200) {
-      updatePost();
+      showNotification("The auction was successful.", true);
+      document.getElementById("auctionForm").reset()
+      closePage("auctionModal");
+    } else if (request.status === 404) {
+      showNotification("Sorry, you cannot create auction without login", false);
+    } else{
+      showNotification("Sorry, something went wrong", false);
     }
   };
-
-  request.open("POST", "/unlike-post");
-  request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  request.send(`id=${postId}`);
 }
+
+
+
+function bidAuction(){
+  var formData = new FormData();
+
+  const bid = document.getElementById("bidPrice").value;
+  const id = document.getElementById("bidId").value;
+  const owner = document.getElementById("auctionOwner").value;
+
+  formData.append("id", id);
+  formData.append("bid", bid);
+  formData.append("owner", owner);
+
+
+  const request = new XMLHttpRequest();
+
+  request.open("POST", "/bid");
+  request.send(formData);
+
+  request.onreadystatechange = function () { 
+    if (request.status === 200) {
+      showNotification("The bid was successful.", true);
+      document.getElementById("bidForm").reset()
+      closePage("bidModal");
+    } else if (request.status === 404) {
+      showNotification("Sorry, you cannot bid without login", false);
+    } else if (request.status === 403) {
+      showNotification("Sorry, the bid is lower the current bid", false);
+    } else if(request.status ===402){
+      showNotification("Sorry, you cannot bid your own auction", false);
+    }
+  };
+}
+
