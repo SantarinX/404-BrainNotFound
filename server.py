@@ -1,4 +1,5 @@
 from flask import Flask, request, make_response, render_template
+from flask_socketio import SocketIO, send, emit
 import bcrypt
 import random
 import html
@@ -10,6 +11,7 @@ import datetime
 
 
 app = Flask(__name__,template_folder="static")
+socketio = SocketIO(app, transports=['websocket'])
 
 #REMEMBER TO CHANGE THE DATABASE NAME TO "database"
 client= MongoClient("database")
@@ -239,6 +241,6 @@ def addBid():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    socketio.run(app, host="localhost", port=8080)
 
 
