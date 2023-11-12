@@ -10,12 +10,11 @@ import uuid
 import datetime
 
 app = Flask(__name__, template_folder="static")
-socketio = SocketIO(app, transports=['websocket'])
 
 # REMEMBER TO CHANGE THE DATABASE NAME TO "database"
-# client= MongoClient("database")
+client= MongoClient("database")
 
-client = MongoClient("localhost")
+#client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -236,6 +235,7 @@ def addBid():
 
     current_highest_bid = max(auctionItem['bids'].values(), default=int(auctionItem['price']))
     if value <= current_highest_bid:
+        auction_winner(auctionItem)
         return make_response(("bidTooLow", 403))
 
     auctionList = auctionItem['bids']
@@ -246,6 +246,20 @@ def addBid():
     response = make_response(("success", 200))
     return response
 
+def auction_winner(auctionItem):
+    if auctionItem['bids']:
+        highest_bid = max(auctionItem['bids'], key=auctionItem['bids'].get)
+        auctionList_db.update_one(
+            {"id": auctionItem['id']},
+            {"$set": {"winner": highest_bid, "winning_bid": auctionItem['bids'][highest_bid]}}
+        )
+    else:
+        # No bids were placed
+        auctionList_db.update_one(
+            {"id": auctionItem['id']},
+            {"$set": {"winner": None, "winning_bid": None}}
+        )
+
 
 if __name__ == "__main__":
-    socketio.run(app, host="localhost", port=8080, allow_unsafe_werkzeug=True)
+    app.run(host="0.0.0.0", port=8080)

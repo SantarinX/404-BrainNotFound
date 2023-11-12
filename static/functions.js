@@ -230,4 +230,6 @@ function bidAuction(){
       showNotification("Sorry, the bid is already ended", false);
     }
   };
+
+
 }
