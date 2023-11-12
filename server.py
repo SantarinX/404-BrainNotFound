@@ -193,7 +193,7 @@ def saveAuction():
             itemImage = filename
             imageURI = f'./static/images/{username}/{filename}'
             id = str(uuid.uuid4())
-            auctionEnd = datetime.datetime.now() + datetime.timedelta(hours=int(request.form['duration']))
+            auctionEnd = datetime.datetime.now() + datetime.timedelta(minutes=int(request.form['duration']))
             auctionEnd = auctionEnd.strftime("%m-%d-%Y %H:%M:%S")
             owner = username
 
@@ -229,9 +229,9 @@ def addBid():
     
     auctionItem = auctionList_db.find_one({"id": id})
 
-    current_highest_bid = max(auctionItem['bids'].values(), default=0)
+    current_highest_bid = max(auctionItem['bids'].values(), default=int(auctionItem['price']))
     if value <= current_highest_bid:
-        return make_response(("bidTooLow", 400))
+        return make_response(("bidTooLow", 403))
 
     auctionList=auctionItem['bids']
     auctionList[username]=value
