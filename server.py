@@ -14,9 +14,9 @@ app = Flask(__name__,template_folder="static")
 socketio = SocketIO(app, transports=['websocket'])
 
 #REMEMBER TO CHANGE THE DATABASE NAME TO "database"
-client= MongoClient("database")
+#client= MongoClient("database")
 
-client= MongoClient("localhost")
+client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -229,7 +229,10 @@ def addBid():
     
     auctionItem = auctionList_db.find_one({"id": id})
 
-    #Blow is not finished, need to check if the bid is higher than the current bid
+    current_highest_bid = max(auctionItem['bids'].values(), default=0)
+    if value <= current_highest_bid:
+        return make_response(("bidTooLow", 400))
+
     auctionList=auctionItem['bids']
     auctionList[username]=value
 
@@ -241,6 +244,6 @@ def addBid():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host="localhost", port=8080)
+    socketio.run(app, host="localhost", port=8080, allow_unsafe_werkzeug=True)
 
 

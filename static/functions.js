@@ -220,6 +220,9 @@ function bidAuction(){
     } else if(request.status ===402){
       showNotification("Sorry, you cannot bid your own auction", false);
     }
+    else if(request.status ===400){
+      showNotification("Sorry, you bid is lower that current bid", false);
+    }
   };
 }
 
