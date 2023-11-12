@@ -145,13 +145,20 @@ function addToPostList(auctionData) {
       <img src="${auctionData.imageURI}" alt="Auction Image">
       <p>Starting Price: $${auctionData.price}</p>
       <p>Auction Ends at: ${auctionData.duration} </p>
-      <input id=bidId value="${auctionData.id}" hidden>
-      <input id=auctionOwner value="${auctionData.owner}" hidden>
-      <button class="bid-button" onclick="pageDisplay('bidModal')">Bid</button>
+      <button class="bid-button" onclick="prepareBidModal('${auctionData.id}', '${auctionData.owner}')">Bid</button>
   `;
 
   auctionItem.innerHTML = html;
   postList.appendChild(auctionItem);
+}
+
+function prepareBidModal(auctionId, auctionOwner) {
+  // Set the auction item's ID and owner into the hidden inputs of the bid form
+  document.getElementById("bidId").value = auctionId;
+  document.getElementById("auctionOwner").value = auctionOwner;
+
+  // Now open the bid modal
+  pageDisplay('bidModal');
 }
 
 
@@ -219,7 +226,8 @@ function bidAuction(){
       showNotification("Sorry, the bid is lower the current bid", false);
     } else if(request.status ===402){
       showNotification("Sorry, you cannot bid your own auction", false);
+    }else if(request.status ===401){
+      showNotification("Sorry, the bid is already ended", false);
     }
   };
 }
-
