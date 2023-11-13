@@ -330,4 +330,3 @@ function updateAuctionWinnerBid(auctionData) {
     auctionPost.textContent = `Winner bid: $${auction.winning_bid}`;
   });
 }
-
