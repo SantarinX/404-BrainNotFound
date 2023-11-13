@@ -19,7 +19,7 @@ print("Using server:",socketio.server.eio.async_mode)
 
 client= MongoClient("database")
 
-client = MongoClient("localhost")
+# client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -192,10 +192,10 @@ def saveAuction():
 
             file.save(os.path.join('static/images/' + username, filename))
 
-            itemTitle = request.form['title']
-            itemDescription = request.form['description']
-            itemPrice = request.form['price']
-            itemImage = filename
+            itemTitle = html.escape(request.form['title'])
+            itemDescription = html.escape(request.form['description'])
+            itemPrice = html.escape(request.form['price'])
+            itemImage = html.escape(filename)
             imageURI = f'./static/images/{username}/{filename}'
             id = str(uuid.uuid4())
             auctionEnd = datetime.datetime.now() + datetime.timedelta(minutes=int(request.form['duration']))
@@ -224,7 +224,6 @@ def handle_update(json):
 
 @socketio.on('bid')
 def handle_bid(json):
-    print('received bid: ' + str(json))
     item_id = json['id']
     bid = int(json['bid'])
     bidder = json['bidder']
@@ -235,6 +234,10 @@ def handle_bid(json):
     current_time = datetime.datetime.now()
     auction_end = datetime.datetime.strptime(item['duration'], "%m-%d-%Y %H:%M:%S")
     
+    if bidder == owner:
+        emit('bid_response', {'status': 'error', 'message': 'You cannot bid on your own item'})
+        return
+    
     if current_time > auction_end:
         emit('bid_response', {'status': 'error', 'message': 'Auction has ended'})
         return
@@ -244,16 +247,14 @@ def handle_bid(json):
         emit('bid_response', {'status': 'error', 'message': 'Bid must be higher than current bid'})
         return
     
-    if bidder == owner:
-        emit('bid_response', {'status': 'error', 'message': 'You cannot bid on your own item'})
-        return
+ 
     
     bids = item['bids']
     bids[bidder] = bid
-    auctionList_db.update_one({"id": item_id}, {"$set": {"bids": bids}})
-    auctionList_db.update_one({"id": item_id}, {"$set": {"current_bid": bid}})
+    auctionList_db.update_one({"id": item_id}, {"$set": {"bids": bids, "current_bid": bid, "winner": bidder, "winning_bid": bid}})
 
-    emit('bid_response', {'status': 'success', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder}, broadcast=True)
+    emit('bid_response', {'status': 'success_global', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder}, broadcast=True)
+    emit('bid_response', {'status': 'success_local', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder})
 
 
 @socketio.on('timeLeft')
@@ -299,7 +300,6 @@ def handle_winner(json):
 
 @app.route('/auction-history', methods=['GET'])
 def getAuctionHistory():
-    print("getAuctionHistory")
     if not isAuthenticated(request):
         response = make_response(("notAuthenticated", 404))
         return response
@@ -356,4 +356,4 @@ def auction_winner(auctionItem):
         )
 
 if __name__ == "__main__":
-    socketio.run(app, host="localhost", port=8080)
+    socketio.run(app, host="0.0.0.0", port=8080)
