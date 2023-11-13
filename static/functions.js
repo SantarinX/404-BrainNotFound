@@ -326,6 +326,6 @@ function updateAuctionWinnerBid(auctionData) {
   auctionData.forEach(auction => {
     console.log("winner-" + String(auction.id));
     const auctionPost = document.getElementById("winning_bid-" + String(auction.id));
-    auctionPost.textContent = `Winner bid: ${auction.winning_bid}`;
+    auctionPost.textContent = `Winner bid: $${auction.winning_bid}`;
   });
 }
