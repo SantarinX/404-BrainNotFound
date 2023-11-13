@@ -331,5 +331,5 @@ function updateAuctionWinnerBid(auctionData) {
   });
 }
 
-}
+
 
