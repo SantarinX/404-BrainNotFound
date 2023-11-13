@@ -225,6 +225,8 @@ function bidAuction(){
       document.getElementById("bidForm").reset();
       closePage("bidModal");
       updateBid(data.id, data.bid)
+    }else{
+      showNotification(data.message, false);
     }
   });
 }
