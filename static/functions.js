@@ -219,6 +219,14 @@ function bidAuction(){
   const bidder = document.getElementById("welcome_user").innerHTML.split("!")[1].trim();
 
   socket.emit('bid', { id: id, bid: bid, owner: owner, bidder: bidder});
+  socket.on('bid_response', function(data) {
+    if (data.status === 'success_local') {
+      showNotification(data.message, true);
+      document.getElementById("bidForm").reset();
+      closePage("bidModal");
+      updateBid(data.id, data.bid)
+    }
+  });
 }
 
 function getAuctions() {
@@ -283,13 +291,8 @@ function displayAuctionsInModal(auctionData, type) {
 
 
 socket.on('bid_response', function(data) {
-  if (data.status === 'success') {
-    showNotification(data.message, true);
-    document.getElementById("bidForm").reset();
-    closePage("bidModal");
+  if (data.status === 'success_global') {
     updateBid(data.id, data.bid)
-  } else {
-    showNotification(data.message, false);
   }
 });
 

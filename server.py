@@ -17,7 +17,7 @@ print("Using server:",socketio.server.eio.async_mode)
 
 client= MongoClient("database")
 
-client = MongoClient("localhost")
+# client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -251,7 +251,8 @@ def handle_bid(json):
     auctionList_db.update_one({"id": item_id}, {"$set": {"bids": bids}})
     auctionList_db.update_one({"id": item_id}, {"$set": {"current_bid": bid}})
 
-    emit('bid_response', {'status': 'success', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder}, broadcast=True)
+    emit('bid_response', {'status': 'success_global', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder}, broadcast=True)
+    emit('bid_response', {'status': 'success_local', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder})
 
 
 @socketio.on('timeLeft')
@@ -354,4 +355,4 @@ def auction_winner(auctionItem):
         )
 
 if __name__ == "__main__":
-    socketio.run(app, host="localhost", port=8080)
+    socketio.run(app, host="0.0.0.0", port=8080)
