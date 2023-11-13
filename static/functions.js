@@ -148,6 +148,7 @@ function addToPostList(auctionData) {
       <p>Starting Price: $${auctionData.price}</p>
       <p>Auction Ends at: ${auctionData.duration} </p>
       <p id='winner-${auctionData.id}'>Winner: </p>
+      <p id='winning_bid-${auctionData.id}'>Winning bid: </p>
       <button class="bid-button" onclick="prepareBidModal('${auctionData.id}', '${auctionData.owner}')">Bid</button>
   `;
 
@@ -306,6 +307,7 @@ function updateWinner() {
     if (this.readyState === 4 && this.status === 200) {
       const auctionData = JSON.parse(this.responseText);
       updateAuctionWinnerTag(auctionData);
+      updateAuctionWinnerBid(auctionData);
     }
   };
 }
@@ -316,5 +318,14 @@ function updateAuctionWinnerTag(auctionData) {
     console.log("winner-" + String(auction.id));
     const auctionPost = document.getElementById("winner-" + String(auction.id));
     auctionPost.textContent = `Winner: ${auction.winner}`;
+  });
+}
+
+function updateAuctionWinnerBid(auctionData) {
+
+  auctionData.forEach(auction => {
+    console.log("winner-" + String(auction.id));
+    const auctionPost = document.getElementById("winning_bid-" + String(auction.id));
+    auctionPost.textContent = `Winner bid: ${auction.winning_bid}`;
   });
 }
