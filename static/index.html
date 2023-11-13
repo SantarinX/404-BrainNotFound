@@ -83,6 +83,24 @@
         </div>
     </div>
 
+    <button id="wonAuctionButton" onclick="pageDisplay('myAuctionModal'); getAuctions()">My Auctions</button>
+    <div id="myAuctionModal" class="modal">
+        <div class="modal-content">
+            <span id="myAuctionClose" class="close" onclick="closePage('myAuctionModal')">X</span>
+            <h2>My Auctions</h2>
+            <div id="myAuctionList"></div>
+        </div>
+    </div>
+
+    <button id="wonAuctionButton" onclick="pageDisplay('myWinModal'); getWins()">My Wins</button>
+    <div id="myWinModal" class="modal">
+        <div class="modal-content">
+            <span id="myWinClose" class="close" onclick="closePage('myWinModal')">X</span>
+            <h2>My Wins</h2>
+            <div id="myWinList"></div>
+        </div>
+    </div>
+
     <div id="bidModal" class="modal">
         <div class="modal-content">
             <span id="bidClose" class="close" onclick="closePage('bidModal')">X</span>

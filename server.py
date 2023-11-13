@@ -10,12 +10,11 @@ import uuid
 import datetime
 
 app = Flask(__name__, template_folder="static")
-socketio = SocketIO(app, transports=['websocket'])
 
 # REMEMBER TO CHANGE THE DATABASE NAME TO "database"
-# client= MongoClient("database")
+client= MongoClient("database")
 
-client = MongoClient("localhost")
+#client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -123,7 +122,6 @@ def register():
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 
-
 @app.route('/post-history', methods=["GET"])
 def showingPost():
     posts = []
@@ -198,7 +196,7 @@ def saveAuction():
 
             auctionList_db.insert_one(
                 {"owner": owner, "id": id, "imageURI": imageURI, "title": itemTitle, "description": itemDescription,
-                 "price": itemPrice, "image": itemImage, "duration": auctionEnd, "bids": {}})
+                 "price": itemPrice, "image": itemImage, "duration": auctionEnd, "bids": {}, "winner": ""})
 
             response = make_response(("success", 200))
             return response
@@ -236,6 +234,7 @@ def addBid():
 
     current_highest_bid = max(auctionItem['bids'].values(), default=int(auctionItem['price']))
     if value <= current_highest_bid:
+        auction_winner(auctionItem)
         return make_response(("bidTooLow", 403))
 
     auctionList = auctionItem['bids']
@@ -246,6 +245,78 @@ def addBid():
     response = make_response(("success", 200))
     return response
 
+@app.route('/auction-history', methods=['GET'])
+def getAuctionHistory():
+    print("getAuctionHistory")
+    if not isAuthenticated(request):
+        response = make_response(("notAuthenticated", 404))
+        return response
+
+    user = login_info_db.find_one({"id": request.cookies.get("id")})
+    username = html.escape(user["username"])
+
+    auctionList = []
+    for auctionItem in auctionList_db.find({"owner": username}):
+        auctionList.append(auctionItem)
+
+    auctionList_json = json.dumps(auctionList, default=str)
+
+    response = make_response(auctionList_json, 200)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    return response
+
+@app.route('/win-history', methods=['GET'])
+def getWinHistory():
+    print("getWinHistory")
+    if not isAuthenticated(request):
+        response = make_response(("notAuthenticated", 404))
+        return response
+
+    user = login_info_db.find_one({"id": request.cookies.get("id")})
+    username = html.escape(user["username"])
+
+    auctionList = []
+    for auctionItem in auctionList_db.find({"winner": username}):
+        auctionList.append(auctionItem)
+
+    print(auctionList)
+    auctionList_json = json.dumps(auctionList, default=str)
+
+    response = make_response(auctionList_json, 200)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    return response
+
+@app.route('/update-winner', methods=['GET'])
+def updateWinner():
+
+    auctionList = []
+
+    for auctionItem in auctionList_db.find():
+        if datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S") >= auctionItem['duration'] and auctionItem["winner"] != None:
+            auctionList.append(auctionItem)
+
+    auctionList_json = json.dumps(auctionList, default=str)
+
+    response = make_response(auctionList_json, 200)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    return response
+
+def auction_winner(auctionItem):
+    if auctionItem['bids']:
+        highest_bid = max(auctionItem['bids'], key=auctionItem['bids'].get)
+        auctionList_db.update_one(
+            {"id": auctionItem['id']},
+            {"$set": {"winner": highest_bid, "winning_bid": auctionItem['bids'][highest_bid]}}
+        )
+    else:
+        # No bids were placed
+        auctionList_db.update_one(
+            {"id": auctionItem['id']},
+            {"$set": {"winner": None, "winning_bid": None}}
+        )
 
 if __name__ == "__main__":
-    socketio.run(app, host="localhost", port=8080, allow_unsafe_werkzeug=True)
+    app.run(host="0.0.0.0", port=8080)

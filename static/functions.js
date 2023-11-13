@@ -26,6 +26,8 @@ function get_username() {
 function welcome() {
   get_username();
   updatePost();
+  updateWinner();
+  setInterval(updateWinner, 2000);
   // setInterval(updatePost, 2000);
 }
 
@@ -145,9 +147,11 @@ function addToPostList(auctionData) {
       <img src="${auctionData.imageURI}" alt="Auction Image">
       <p>Starting Price: $${auctionData.price}</p>
       <p>Auction Ends at: ${auctionData.duration} </p>
+      <p id='winner-${auctionData.id}'>Winner: </p>
       <button class="bid-button" onclick="prepareBidModal('${auctionData.id}', '${auctionData.owner}')">Bid</button>
   `;
 
+  auctionItem.id = auctionData.id;
   auctionItem.innerHTML = html;
   postList.appendChild(auctionItem);
 }
@@ -209,7 +213,6 @@ function bidAuction(){
   formData.append("bid", bid);
   formData.append("owner", owner);
 
-
   const request = new XMLHttpRequest();
 
   request.open("POST", "/bid");
@@ -230,4 +233,88 @@ function bidAuction(){
       showNotification("Sorry, the bid is already ended", false);
     }
   };
+}
+
+function getAuctions() {
+  const request = new XMLHttpRequest();
+
+  request.open("GET", "/auction-history");
+  request.send();
+
+  request.onreadystatechange = function () {
+    if (this.readyState === 4 && this.status === 200) {
+      const auctionData = JSON.parse(this.responseText);
+      displayAuctionsInModal(auctionData, "history");
+    }
+  };
+}
+
+function getWins() {
+  const request = new XMLHttpRequest();
+
+  request.open("GET", "/win-history");
+  request.send();
+
+  request.onreadystatechange = function () {
+    if (this.readyState === 4 && this.status === 200) {
+      const auctionData = JSON.parse(this.responseText);
+      displayAuctionsInModal(auctionData, "wins");
+    }
+  };
+}
+
+function displayAuctionsInModal(auctionData, type) {
+
+  let auctionListContainer = "";
+
+  console.log(type);
+
+  if (type == 'history') {
+    auctionListContainer = document.getElementById('myAuctionList');
+  } 
+  
+  if (type == 'wins') {
+    auctionListContainer = document.getElementById('myWinList');
+  }
+
+  auctionListContainer.innerHTML = '';
+
+  auctionData.forEach(auction => {
+      const auctionElement = document.createElement('div');
+      auctionElement.className = 'auction-item';
+      if (type == 'history') {
+        console.log("history")
+        auctionElement.textContent = `Title: ${auction.title}, Price: ${auction.price}, Winner: ${auction.winner}`;
+      } else if (type == 'wins') {
+        console.log("wins")
+        auctionElement.textContent = `Title: ${auction.title}, Price: ${auction.price}, Owner: ${auction.owner}`;
+      }
+      auctionElement.style.border = '1px solid black';
+      auctionListContainer.appendChild(auctionElement);
+  });
+
+}
+
+function updateWinner() {
+  
+  const request = new XMLHttpRequest();
+
+  request.open("GET", "/update-winner");
+  request.send();
+
+  request.onreadystatechange = function () {
+    if (this.readyState === 4 && this.status === 200) {
+      const auctionData = JSON.parse(this.responseText);
+      updateAuctionWinnerTag(auctionData);
+    }
+  };
+}
+
+function updateAuctionWinnerTag(auctionData) {
+
+  auctionData.forEach(auction => {
+    console.log("winner-" + String(auction.id));
+    const auctionPost = document.getElementById("winner-" + String(auction.id));
+    auctionPost.textContent = `Winner: ${auction.winner}`;
+  });
 }
