@@ -8,11 +8,13 @@ import os
 from pymongo import MongoClient
 import uuid
 import datetime
+import pytz
+
 
 app = Flask(__name__, template_folder="static")
 
-
-client= MongoClient("database")
+eastern = pytz.timezone('US/Eastern')
+client = MongoClient("database")
 
 #client = MongoClient("localhost")
 
@@ -190,7 +192,7 @@ def saveAuction():
             itemImage = filename
             imageURI = f'./static/images/{username}/{filename}'
             id = str(uuid.uuid4())
-            auctionEnd = datetime.datetime.now() + datetime.timedelta(minutes=int(request.form['duration']))
+            auctionEnd = datetime.datetime.now(eastern) + datetime.timedelta(minutes=int(request.form['duration']))
             auctionEnd = auctionEnd.strftime("%m-%d-%Y %H:%M:%S")
             owner = username
 
@@ -229,7 +231,7 @@ def addBid():
     auctionItem = auctionList_db.find_one({"id": id})
 
     auction_end = auctionItem['duration']
-    if datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S") >= auction_end:
+    if datetime.datetime.now(eastern).strftime("%m-%d-%Y %H:%M:%S") >= auction_end:
         return make_response(("Auction has ended", 401))
 
     current_highest_bid = max(auctionItem['bids'].values(), default=int(auctionItem['price']))
@@ -296,7 +298,7 @@ def updateWinner():
     auctionList = []
 
     for auctionItem in auctionList_db.find():
-        if datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S") >= auctionItem['duration'] and auctionItem["winner"] != None:
+        if datetime.datetime.now(eastern).strftime("%m-%d-%Y %H:%M:%S") >= auctionItem['duration'] and auctionItem["winner"] != None:
             auctionList.append(auctionItem)
 
     auctionList_json = json.dumps(auctionList, default=str)

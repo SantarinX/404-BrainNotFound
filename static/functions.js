@@ -331,5 +331,3 @@ function updateAuctionWinnerBid(auctionData) {
   });
 }
 
-}
-
