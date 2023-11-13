@@ -26,6 +26,8 @@ function get_username() {
 function welcome() {
   get_username();
   updatePost();
+  showWonAuctions();
+  showCreatedAuctions();
   // setInterval(updatePost, 2000);
 }
 
