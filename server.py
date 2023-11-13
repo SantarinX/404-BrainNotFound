@@ -9,6 +9,8 @@ from pymongo import MongoClient
 import uuid
 import datetime
 
+
+
 app = Flask(__name__, template_folder="static")
 
 app.config['SECRET_KEY'] = 'secret!'
