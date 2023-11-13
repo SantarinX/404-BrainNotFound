@@ -259,6 +259,46 @@ def auction_winner(auctionItem):
             {"id": auctionItem['id']},
             {"$set": {"winner": None, "winning_bid": None}}
         )
+@app.route('/won-auctions', methods=["GET"])
+def won_auctions():
+    if not isAuthenticated(request):
+        return make_response("Not authenticated", 401)
+
+    user = login_info_db.find_one({"id": request.cookies.get("id")})
+    username = html.escape(user["username"])
+    
+    won_auctions = []
+    for auction in auctionList_db.find({"winner": username}):
+        won_auctions.append({
+            'title': auction['title'],
+            'description': auction['description'],
+            'winning_bid': auction['winning_bid'],
+            'imageURI': auction['imageURI']
+        })
+
+    response = make_response(json.dumps(won_auctions), 200)
+    return response
+
+
+@app.route('/created-auctions', methods=["GET"])
+def created_auctions():
+    if not isAuthenticated(request):
+        return make_response("Not authenticated", 401)
+
+    user = login_info_db.find_one({"id": request.cookies.get("id")})
+    username = html.escape(user["username"])
+    
+    user_auctions = []
+    for auction in auctionList_db.find({"owner": username}):
+        user_auctions.append({
+            'title': auction['title'],
+            'description': auction['description'],
+            'initial_price': auction['price'],
+            'imageURI': auction['imageURI'],
+        })
+
+    response = make_response(json.dumps(user_auctions), 200)
+    return response
 
 
 if __name__ == "__main__":
