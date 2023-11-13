@@ -1,3 +1,5 @@
+let socket= io("localhost:8080",{ transports: ['websocket'] });
+
 function pageDisplay(name) {
   document.getElementById(name).style.display = "block";
 }
@@ -15,7 +17,7 @@ function get_username() {
       if (name_user == "Guest") {
         b.innerHTML = "Welcome!";
       } else {
-        b.innerHTML = "Welcome! " + this.responseText + " 😀";
+        b.innerHTML = "Welcome! " + this.responseText;
       }
     }
   };
@@ -26,8 +28,8 @@ function get_username() {
 function welcome() {
   get_username();
   updatePost();
-  updateWinner();
-  setInterval(updateWinner, 2000);
+  // updateWinner();
+  // setInterval(updateWinner, 2000);
   // setInterval(updatePost, 2000);
 }
 
@@ -105,7 +107,7 @@ function loginAccount() {
       user_name = this.responseText;
 
       document.getElementById("welcome_user").innerHTML =
-        "Welcome! " + this.responseText + " 😀";
+        "Welcome! " + this.responseText;
     } else if (request.status === 404) {
       showNotification("Login Failed", false);
       document.getElementById("password").value = "";
@@ -147,14 +149,17 @@ function addToPostList(auctionData) {
       <img src="${auctionData.imageURI}" alt="Auction Image">
       <p>Starting Price: $${auctionData.price}</p>
       <p>Auction Ends at: ${auctionData.duration} </p>
-      <p id='winner-${auctionData.id}'>Winner: </p>
-      <p id='winning_bid-${auctionData.id}'>Winning bid: </p>
-      <button class="bid-button" onclick="prepareBidModal('${auctionData.id}', '${auctionData.owner}')">Bid</button>
+      <p id='current_bid-${auctionData.id}'>Current bid: $${auctionData.current_bid}</p>
+      <p id='time_left-${auctionData.id}'>Time left:</p>
+      <p id='winner-${auctionData.id}'style="display:none">Winner: </p>
+      <p id='winning_bid-${auctionData.id}' style="display:none">Winning bid: </p>
+      <button id='bidButton-${auctionData.id}' class="bid-button" onclick="prepareBidModal('${auctionData.id}', '${auctionData.owner}')">Bid</button>
   `;
 
   auctionItem.id = auctionData.id;
   auctionItem.innerHTML = html;
   postList.appendChild(auctionItem);
+  socket.emit('timeLeft', { id: auctionData.id, duration: auctionData.duration });
 }
 
 function prepareBidModal(auctionId, auctionOwner) {
@@ -193,6 +198,7 @@ function postAuction(){
       showNotification("The auction was successful.", true);
       document.getElementById("auctionForm").reset()
       closePage("auctionModal");
+      socket.emit('updatePost', {});
     } else if (request.status === 404) {
       showNotification("Sorry, you cannot create auction without login", false);
     } else{
@@ -201,39 +207,18 @@ function postAuction(){
   };
 }
 
+function updateBid(id, bid) {
+document.getElementById("current_bid-" + id).textContent = "Current bid: $" + bid;
 
+}
 
 function bidAuction(){
-  var formData = new FormData();
-
   const bid = document.getElementById("bidPrice").value;
   const id = document.getElementById("bidId").value;
   const owner = document.getElementById("auctionOwner").value;
+  const bidder = document.getElementById("welcome_user").innerHTML.split("!")[1].trim();
 
-  formData.append("id", id);
-  formData.append("bid", bid);
-  formData.append("owner", owner);
-
-  const request = new XMLHttpRequest();
-
-  request.open("POST", "/bid");
-  request.send(formData);
-
-  request.onreadystatechange = function () { 
-    if (request.status === 200) {
-      showNotification("The bid was successful.", true);
-      document.getElementById("bidForm").reset()
-      closePage("bidModal");
-    } else if (request.status === 404) {
-      showNotification("Sorry, you cannot bid without login", false);
-    } else if (request.status === 403) {
-      showNotification("Sorry, the bid is lower the current bid", false);
-    } else if(request.status ===402){
-      showNotification("Sorry, you cannot bid your own auction", false);
-    }else if(request.status ===401){
-      showNotification("Sorry, the bid is already ended", false);
-    }
-  };
+  socket.emit('bid', { id: id, bid: bid, owner: owner, bidder: bidder});
 }
 
 function getAuctions() {
@@ -296,40 +281,40 @@ function displayAuctionsInModal(auctionData, type) {
 
 }
 
-function updateWinner() {
+
+socket.on('bid_response', function(data) {
+  if (data.status === 'success') {
+    showNotification(data.message, true);
+    document.getElementById("bidForm").reset();
+    closePage("bidModal");
+    updateBid(data.id, data.bid)
+  } else {
+    showNotification(data.message, false);
+  }
+});
+
+socket.on('time_response', function(data) {
+  if (data.status === 'keep') {
+    const auctionPost = document.getElementById("time_left-" + String(data.id));
+    auctionPost.textContent = `Time left: ${data.hr}hr ${data.mins}min ${data.sec}sec`;
+  }else if (data.status === 'end') {
+    const auctionPost = document.getElementById("time_left-" + String(data.id));
+    auctionPost.textContent = `Time left: Auction Ended`;
+    const bidButton = document.getElementById("bidButton-" + String(data.id));
+    bidButton.style.display = "none";
+  }
   
-  const request = new XMLHttpRequest();
+});
 
-  request.open("GET", "/update-winner");
-  request.send();
+socket.on('winner_response', function(data) {
+  const auctionPost = document.getElementById("winner-" + String(data.id));
+  auctionPost.style.display = "block";
+  auctionPost.textContent = `Winner: ${data.winner}`;
+  const winningBid = document.getElementById("winning_bid-" + String(data.id));
+  winningBid.textContent = `Winning bid: $${data.winning_bid}`;
+  winningBid.style.display = "block";
+});
 
-  request.onreadystatechange = function () {
-    if (this.readyState === 4 && this.status === 200) {
-      const auctionData = JSON.parse(this.responseText);
-      updateAuctionWinnerTag(auctionData);
-      updateAuctionWinnerBid(auctionData);
-    }
-  };
-}
-
-function updateAuctionWinnerTag(auctionData) {
-
-  auctionData.forEach(auction => {
-    console.log("winner-" + String(auction.id));
-    const auctionPost = document.getElementById("winner-" + String(auction.id));
-    auctionPost.textContent = `Winner: ${auction.winner}`;
-  });
-
-}
-
-function updateAuctionWinnerBid(auctionData) {
-
-  auctionData.forEach(auction => {
-    console.log("winner-" + String(auction.id));
-    const auctionPost = document.getElementById("winning_bid-" + String(auction.id));
-    auctionPost.textContent = `Winner bid: $${auction.winning_bid}`;
-  });
-}
-
-
-
+socket.on('update_response', function() {
+  updatePost();
+});

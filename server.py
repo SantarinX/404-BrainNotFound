@@ -11,10 +11,13 @@ import datetime
 
 app = Flask(__name__, template_folder="static")
 
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, transports=['websocket'])
+print("Using server:",socketio.server.eio.async_mode)
 
 client= MongoClient("database")
 
-#client = MongoClient("localhost")
+client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
@@ -136,6 +139,9 @@ def showingPost():
         one_post['owner'] = post['owner']
         one_post['id'] = post['id']
         one_post['bids'] = post['bids']
+        one_post['winner'] = post['winner']
+        one_post['winning_bid'] = post['winning_bid']
+        one_post['current_bid'] = post['current_bid']
 
         posts.append(one_post)
 
@@ -196,7 +202,7 @@ def saveAuction():
 
             auctionList_db.insert_one(
                 {"owner": owner, "id": id, "imageURI": imageURI, "title": itemTitle, "description": itemDescription,
-                 "price": itemPrice, "image": itemImage, "duration": auctionEnd, "bids": {}, "winner": ""})
+                 "price": itemPrice, "image": itemImage, "duration": auctionEnd, "bids": {}, "winner": "", "winning_bid":"", "current_bid": itemPrice})
 
             response = make_response(("success", 200))
             return response
@@ -208,44 +214,86 @@ def saveAuction():
         response = make_response(("notAuthenticated", 404))
         return response
 
-
-@app.route('/bid', methods=['POST'])
-def addBid():
-    if not isAuthenticated(request):
-        response = make_response(("notAuthenticated", 404))
-        return response
-
-    value = int(request.form['bid'])
-    id = request.form['id']
-    owner = request.form['owner']
-
-    user = login_info_db.find_one({"id": request.cookies.get("id")})
-    username = html.escape(user["username"])
-
-    if owner == username:
-        response = make_response(("owner", 402))
-        return response
-
-    auctionItem = auctionList_db.find_one({"id": id})
-
-    auction_end = auctionItem['duration']
-    if datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S") >= auction_end:
-        return make_response(("Auction has ended", 401))
-
-    current_highest_bid = max(auctionItem['bids'].values(), default=int(auctionItem['price']))
-    if value <= current_highest_bid:
-
-        return make_response(("bid too low", 403))
-    else:
-        auctionList = auctionItem['bids']
-        auctionList[username] = value
-        auction_winner(auctionItem)
+@socketio.on('updatePost')
+def handle_update(json):
+    emit('update_response', {}, broadcast=True)
 
 
-    auctionList_db.update_one({"id": id}, {"$set": {"bids": auctionList}})
 
-    response = make_response(("success", 200))
-    return response
+@socketio.on('bid')
+def handle_bid(json):
+    print('received bid: ' + str(json))
+    item_id = json['id']
+    bid = int(json['bid'])
+    bidder = json['bidder']
+
+    item = auctionList_db.find_one({"id": item_id})
+    owner = item['owner']
+    
+    current_time = datetime.datetime.now()
+    auction_end = datetime.datetime.strptime(item['duration'], "%m-%d-%Y %H:%M:%S")
+    
+    if current_time > auction_end:
+        emit('bid_response', {'status': 'error', 'message': 'Auction has ended'})
+        return
+    
+    highest_bid = max(item['bids'].values(), default=int(item['price']))
+    if bid <= highest_bid:
+        emit('bid_response', {'status': 'error', 'message': 'Bid must be higher than current bid'})
+        return
+    
+    if bidder == owner:
+        emit('bid_response', {'status': 'error', 'message': 'You cannot bid on your own item'})
+        return
+    
+    bids = item['bids']
+    bids[bidder] = bid
+    auctionList_db.update_one({"id": item_id}, {"$set": {"bids": bids}})
+    auctionList_db.update_one({"id": item_id}, {"$set": {"current_bid": bid}})
+
+    emit('bid_response', {'status': 'success', 'message': 'Bid received', 'id': item_id, 'bid': bid, 'bidder': bidder}, broadcast=True)
+
+
+@socketio.on('timeLeft')
+def handle_time(json):
+    item_id = json['id']
+    item = auctionList_db.find_one({"id": item_id})
+
+    current_time = datetime.datetime.now()
+    auction_end = datetime.datetime.strptime(item['duration'], "%m-%d-%Y %H:%M:%S")
+    time_left = (auction_end - current_time).total_seconds()
+
+    while True:
+        if time_left <= 0:
+            handle_winner(json)
+            emit('time_response', {'status':'end','id': item_id}, broadcast=True)
+            break
+
+        current_time = datetime.datetime.now()
+        auction_end = datetime.datetime.strptime(item['duration'], "%m-%d-%Y %H:%M:%S")
+
+        time_left = auction_end - current_time
+        time_left = time_left.total_seconds()
+
+        hours = str(int(time_left // 3600))
+        minutes = str(int((time_left % 3600) // 60))
+        seconds = str(int(time_left % 60))
+
+        emit('time_response', {'status':'keep','hr': hours,'mins':minutes,'sec':seconds, 'id': item_id}, broadcast=True)
+        socketio.sleep(1)
+
+
+
+def handle_winner(json):
+    item_id = json['id']
+    item = auctionList_db.find_one({"id": item_id})
+
+    winner= item['winner']
+    winning_bid = item['winning_bid']
+
+    emit('winner_response', {'winner':winner,'winning_bid':winning_bid,'id': item_id}, broadcast=True)
+
+
 
 @app.route('/auction-history', methods=['GET'])
 def getAuctionHistory():
@@ -268,9 +316,10 @@ def getAuctionHistory():
 
     return response
 
+
+
 @app.route('/win-history', methods=['GET'])
 def getWinHistory():
-    print("getWinHistory")
     if not isAuthenticated(request):
         response = make_response(("notAuthenticated", 404))
         return response
@@ -282,7 +331,6 @@ def getWinHistory():
     for auctionItem in auctionList_db.find({"winner": username}):
         auctionList.append(auctionItem)
 
-    print(auctionList)
     auctionList_json = json.dumps(auctionList, default=str)
 
     response = make_response(auctionList_json, 200)
@@ -290,21 +338,7 @@ def getWinHistory():
 
     return response
 
-@app.route('/update-winner', methods=['GET'])
-def updateWinner():
 
-    auctionList = []
-
-    for auctionItem in auctionList_db.find():
-        if datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S") >= auctionItem['duration'] and auctionItem["winner"] != None:
-            auctionList.append(auctionItem)
-
-    auctionList_json = json.dumps(auctionList, default=str)
-
-    response = make_response(auctionList_json, 200)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-
-    return response
 
 def auction_winner(auctionItem):
     if auctionItem['bids']:
@@ -314,11 +348,10 @@ def auction_winner(auctionItem):
             {"$set": {"winner": highest_bid, "winning_bid": auctionItem['bids'][highest_bid]}}
         )
     else:
-        # No bids were placed
         auctionList_db.update_one(
             {"id": auctionItem['id']},
             {"$set": {"winner": None, "winning_bid": None}}
         )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    socketio.run(app, host="localhost", port=8080)
