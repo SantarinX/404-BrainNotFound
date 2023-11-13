@@ -11,6 +11,7 @@ import datetime
 
 app = Flask(__name__, template_folder="static")
 
+
 client= MongoClient("database")
 
 #client = MongoClient("localhost")
@@ -233,11 +234,13 @@ def addBid():
 
     current_highest_bid = max(auctionItem['bids'].values(), default=int(auctionItem['price']))
     if value <= current_highest_bid:
+
         return make_response(("bid too low", 403))
     else:
         auctionList = auctionItem['bids']
         auctionList[username] = value
         auction_winner(auctionItem)
+
 
     auctionList_db.update_one({"id": id}, {"$set": {"bids": auctionList}})
 

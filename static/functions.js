@@ -319,6 +319,7 @@ function updateAuctionWinnerTag(auctionData) {
     const auctionPost = document.getElementById("winner-" + String(auction.id));
     auctionPost.textContent = `Winner: ${auction.winner}`;
   });
+
 }
 
 function updateAuctionWinnerBid(auctionData) {
@@ -329,3 +330,6 @@ function updateAuctionWinnerBid(auctionData) {
     auctionPost.textContent = `Winner bid: $${auction.winning_bid}`;
   });
 }
+
+}
+
