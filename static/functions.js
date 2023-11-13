@@ -233,3 +233,48 @@ function bidAuction(){
 
 
 }
+function showWonAuctions() {
+  const request = new XMLHttpRequest();
+  request.onreadystatechange = function () {
+      if (this.readyState === 4 && this.status === 200) {
+          const auctions = JSON.parse(this.responseText);
+          displayAuctions('wonAuctionsList', auctions);
+      }
+  };
+  request.open("GET", "/won-auctions");
+  request.send();
+}
+
+function showCreatedAuctions() {
+  const request = new XMLHttpRequest();
+  request.onreadystatechange = function () {
+      if (this.readyState === 4 && this.status === 200) {
+          const auctions = JSON.parse(this.responseText);
+          displayAuctions('createdAuctionsList', auctions);
+      }
+  };
+  request.open("GET", "/created-auctions");
+  request.send();
+}
+
+function displayAuctions(containerId, auctions) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = ''; // Clear existing content
+  for (const auction of auctions) {
+      container.appendChild(createAuctionElement(auction));
+  }
+}
+
+function createAuctionElement(auctionData) {
+  var auctionItem = document.createElement('div');
+  auctionItem.className = 'auction';
+  var html = `
+      <h3>${auctionData.title}</h3>
+      <p>${auctionData.description}</p>
+      <img src="${auctionData.imageURI}" alt="Auction Image">
+      <p>Starting Price: $${auctionData.price}</p>
+      <p>Auction Ends at: ${auctionData.duration} </p>
+  `;
+  auctionItem.innerHTML = html;
+  return auctionItem;
+}
