@@ -174,7 +174,9 @@ def getName():
 def saveAuction():
     if isAuthenticated(request):
         if 'image' not in request.files:
-            response = make_response(("noImage", 404))
+            response = make_response(("noImage", 402))
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.status_code = 402
             return response
 
         file = request.files['image']
@@ -209,11 +211,15 @@ def saveAuction():
             response = make_response(("success", 200))
             return response
         else:
-            response = make_response(("wrongFileType", 404))
+            response = make_response(("wrongFileType", 403))
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.status_code = 403
             return response
 
     else:
         response = make_response(("notAuthenticated", 404))
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.status_code = 404
         return response
 
 @socketio.on('updatePost')

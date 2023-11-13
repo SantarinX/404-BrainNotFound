@@ -202,7 +202,7 @@ function postAuction(){
     } else if (request.status === 404) {
       showNotification("Sorry, you cannot create auction without login", false);
     } else{
-      showNotification("Sorry, something went wrong", false);
+      showNotification("Please fill out all the section", false);
     }
   };
 }
