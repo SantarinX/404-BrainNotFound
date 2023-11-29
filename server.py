@@ -247,12 +247,15 @@ def handle_bid(json):
         emit('bid_response', {'status': 'error', 'message': 'Auction has ended'})
         return
     
-    highest_bid = max(item['bids'].values(), default=int(item['price']))
+    curmax = 0
+    if len(list(item['bids'].values())) > 0:
+        curmax = max(item['bids'].values())
+
+    highest_bid = max(curmax, int(item['price']))
     if bid <= highest_bid:
         emit('bid_response', {'status': 'error', 'message': 'Bid must be higher than current bid'})
         return
     
- 
     
     bids = item['bids']
     bids[bidder] = bid
