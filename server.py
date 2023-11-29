@@ -16,9 +16,9 @@ app = Flask(__name__, template_folder="static")
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, transports=['websocket'],cors_allowed_origins="*")
 
-client= MongoClient("database")
+# client= MongoClient("database")
 
-# client = MongoClient("localhost")
+client = MongoClient("localhost")
 
 db = client["CSE312Project"]
 
