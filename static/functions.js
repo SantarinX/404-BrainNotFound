@@ -1,4 +1,4 @@
-let socket= io("localhost:8080",{ transports: ['websocket'] });
+let socket= io(window.location.origin,{ transports: ['websocket'] });
 
 function pageDisplay(name) {
   document.getElementById(name).style.display = "block";
@@ -225,7 +225,7 @@ function bidAuction(){
       document.getElementById("bidForm").reset();
       closePage("bidModal");
       updateBid(data.id, data.bid)
-    }else{
+    }else if (data.status === 'error'){
       showNotification(data.message, false);
     }
   });

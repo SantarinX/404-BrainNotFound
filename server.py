@@ -14,8 +14,7 @@ import datetime
 app = Flask(__name__, template_folder="static")
 
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, transports=['websocket'])
-print("Using server:",socketio.server.eio.async_mode)
+socketio = SocketIO(app, transports=['websocket'],cors_allowed_origins="*")
 
 client= MongoClient("database")
 
