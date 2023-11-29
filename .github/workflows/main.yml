@@ -20,7 +20,7 @@ jobs:
         key: ${{ secrets.cse312 }}
         port: 22
         source: "."
-        target: "/home/ubuntu/"
+        target: "/home/ubuntu/CSE312Web"
 
     - name: SSH commands
       uses: appleboy/ssh-action@master
@@ -32,7 +32,7 @@ jobs:
         script: |
           kill $(cat server.pid)
           rm -f server.pid
-          cd /home/ubuntu/404-BrainNotFound
+          cd /home/ubuntu/CSE312Web
           nohup python server.py & echo $! > server.pid
           
           
