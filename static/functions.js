@@ -60,8 +60,8 @@ function showNotification(message, isSuccess) {
 }
 
 function registerAccount() {
-  const username = document.getElementById("newUsername").value;
-  const password = document.getElementById("newPassword").value;
+  const username = document.getElementById("newUsername").trim().value;
+  const password = document.getElementById("newPassword").trim().value;
 
   if(username === "" || password === ""){
     showNotification("Username or Password cannot be empty", false);
@@ -87,8 +87,8 @@ function registerAccount() {
 }
 
 function loginAccount() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+  const username = document.getElementById("username").trim().value;
+  const password = document.getElementById("password").trim().value;
 
   if(username === "" || password === ""){
     showNotification("Username or Password cannot be empty", false);
