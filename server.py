@@ -1,5 +1,7 @@
 from flask import Flask, request, make_response, render_template
 from flask_socketio import SocketIO, send, emit
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import bcrypt
 import random
 import html
@@ -12,6 +14,16 @@ import datetime
 
 
 app = Flask(__name__, template_folder="static")
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["51 per 10 second"],
+    storage_uri="memory://",
+)
+
+
+blockedIps = {}
 
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, transports=['websocket'],cors_allowed_origins="*")
@@ -47,6 +59,23 @@ def isAuthenticated(Request):
             return True
     return False
 
+@app.before_request
+def checkIpLimit():
+    current_ip = get_remote_address()
+    if current_ip in blockedIps:
+        currentTime = datetime.datetime.now()
+        if currentTime < blockedIps[current_ip]:
+            print("Too many requests from ip: " + current_ip)
+            print("Blocked until: " + str(blockedIps[current_ip]))
+            response = make_response("Too many requests", 429)
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            return response 
+        else:
+            blockedIps.pop(current_ip)
+
+
+
+
 
 @app.route("/")
 def response():
@@ -54,6 +83,12 @@ def response():
     new_response.headers["X-Content-Type-Options"] = "nosniff"
     new_response.headers["Content-Type"] = "text/html; charset=utf-8"
     return new_response
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    ip=get_remote_address()
+    blockedIps[ip] = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    return make_response("Too many requests", 429)
 
 
 @app.route('/static/<subpath>')
