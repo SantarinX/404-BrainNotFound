@@ -30,10 +30,7 @@ jobs:
         key: ${{ secrets.cse312 }}
         port: 22
         script: |
-          kill $(cat server.pid)
-          rm -f server.pid
-          cd /home/ubuntu/CSE312Web
-          nohup python server.py & echo $! > server.pid
+          sudo systemctl restart myserver
           
           
           
