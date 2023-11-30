@@ -62,6 +62,7 @@ def isAuthenticated(Request):
 @app.before_request
 def checkIpLimit():
     current_ip = get_remote_address()
+    print("Current ip: " + current_ip)
     if current_ip in blockedIps:
         currentTime = datetime.datetime.now()
         if currentTime < blockedIps[current_ip]:
