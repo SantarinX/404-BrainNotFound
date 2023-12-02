@@ -10,6 +10,12 @@ import os
 from pymongo import MongoClient
 import uuid
 import datetime
+import base64
+
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 
@@ -24,6 +30,7 @@ limiter = Limiter(
 
 
 blockedIps = {}
+all_tokens = []
 
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, transports=['websocket'],cors_allowed_origins="*")
@@ -58,6 +65,20 @@ def isAuthenticated(Request):
         if user and bcrypt.checkpw(auth_token.encode(), user["auth_token"]):
             return True
     return False
+
+def send_verification_email(email, token):
+    credentials = Credentials.from_authorized_user_file('token.json')
+    service = build('gmail', 'v1', credentials=credentials)
+    message = MIMEMultipart()
+    message['to'] = email
+    message['From'] = '404brainnotfound312@gmail.com'
+    message['subject'] = "Email Verification"
+    url = f'https://www.404brainnotfound.top/check?token={token}'
+    html_content = f'Please confirm your email by clicking on the link below:<br><a href="{url}">Verify my email</a>'
+    body = MIMEText(html_content, 'html')
+    message.attach(body)
+    #need implement more
+
 
 @app.before_request
 def checkIpLimit():
@@ -153,13 +174,41 @@ def register():
     body = request.form.to_dict()
     username = body["newUsername"]
     password = body["newPassword"]
+    email = body["email"]
     # hash password
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode(), salt)
-    login_info_db.insert_one({"username": username, "password": hashed_password})
+    login_info_db.insert_one({"username": username, "password": hashed_password, "email": email})
     response = make_response("Success", 200)
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+
+@app.route('/verification', methods=['POST'])
+
+def verification():
+    email = request.form.get('email')
+    token = str(uuid.uuid4())
+    all_tokens.append(token)
+    send_verification_email(email, token)
+
+    response = make_response({'message': 'Verification email sent'})
+    response.mimetype = "application/json" 
+    return response
+
+@app.route('/check', methods=['GET'])
+
+def check_verification():
+    token = request.args.get('token')
+    if token in all_tokens:
+        response = make_response({'message': 'Your email has been verified!'})
+        response.mimetype = "application/json"
+        return response
+    else:
+        response = make_response({'message': 'Verification link is invalid or has expired'}, 400)
+        response.mimetype = "application/json"
+        return response
 
 @app.route('/post-history', methods=["GET"])
 def showingPost():

@@ -118,6 +118,30 @@ function loginAccount() {
   request.send(`username=${username}&password=${password}`);
 }
 
+//objective2
+function sendVerificationEmail() {
+  const email = document.getElementById("email").value;
+
+  if (email.trim() === "") {
+    showNotification("Email cannot be empty", false);
+    return;
+  }
+
+  const request = new XMLHttpRequest();  
+  
+  request.onload = function () {
+    if (request.status === 200) {
+      showNotification("Verification email sent!", true);
+    } else {
+      showNotification("Failed to send verification email.", false);
+    }
+  };
+
+  request.open("POST", "/verification");
+  request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  request.send(`email=${email}`);
+}
+
 function updatePost() {
   const request = new XMLHttpRequest();
   request.onreadystatechange = function () {
@@ -258,6 +282,9 @@ function getWins() {
     }
   };
 }
+
+
+
 
 function displayAuctionsInModal(auctionData, type) {
 
