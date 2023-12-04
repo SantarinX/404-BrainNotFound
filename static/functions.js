@@ -324,7 +324,7 @@ function displayAuctionsInModal(auctionData, type) {
 
   let auctionListContainer = "";
 
-  console.log(type);
+  // console.log(type);
 
   if (type == 'history') {
     auctionListContainer = document.getElementById('myAuctionList');
@@ -340,10 +340,10 @@ function displayAuctionsInModal(auctionData, type) {
       const auctionElement = document.createElement('div');
       auctionElement.className = 'auction-item';
       if (type == 'history') {
-        console.log("history")
+        // console.log("history")
         auctionElement.textContent = `Title: ${auction.title}, Price: ${auction.price}, Winner: ${auction.winner}`;
       } else if (type == 'wins') {
-        console.log("wins")
+        // console.log("wins")
         auctionElement.textContent = `Title: ${auction.title}, Price: ${auction.price}, Owner: ${auction.owner}`;
       }
       auctionElement.style.border = '1px solid black';

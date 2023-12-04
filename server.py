@@ -68,7 +68,7 @@ def isAuthenticated(Request):
     return False
 
 def send_verification_email(email, token):
-    print(f"localhost:5000/check?token={token}")
+    # print(f"localhost:5000/check?token={token}")
     credentials = Credentials.from_authorized_user_file('token.json')
     service = build('gmail', 'v1', credentials=credentials)
     message = MIMEMultipart()
