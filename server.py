@@ -1,7 +1,5 @@
 from flask import Flask, request, make_response, render_template
-from flask_socketio import SocketIO, send, emit
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from flask_socketio import SocketIO, emit
 import bcrypt
 import random
 import html
@@ -11,7 +9,6 @@ from pymongo import MongoClient
 import uuid
 import datetime
 import base64
-import secrets
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -22,14 +19,14 @@ from email.mime.text import MIMEText
 
 app = Flask(__name__, template_folder="static")
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["51 per 10 second"],
-    storage_uri="memory://",
-)
+def get_real_ip():
+    forwarded_for = request.headers.get('X-Forwarded-For', type=str)
+
+    ip = forwarded_for.split(',')[0].strip()
+    return ip
 
 
+requestRecords = {}
 blockedIps = {}
 all_tokens = {}
 
@@ -54,6 +51,7 @@ MIME_TYPES = {
     '.json': 'application/json',
     '.png': 'image/png'
 }
+
 
 
 def isAuthenticated(Request):
@@ -89,19 +87,32 @@ def send_verification_email(email, token):
         print(f"Error sending verification email: {e}")
 
 @app.before_request
-def checkIpLimit():
-    current_ip = request.headers.get('X-Real-IP', request.remote_addr)
-    print("Current ip: " + current_ip)
-    if current_ip in blockedIps:
-        currentTime = datetime.datetime.now()
-        if currentTime < blockedIps[current_ip]:
-            print("Too many requests from ip: " + current_ip)
-            print("Blocked until: " + str(blockedIps[current_ip]))
-            response = make_response("Too many requests", 429)
+def nothing():
+    ip = get_real_ip()
+    time = datetime.datetime.now()
+
+    if ip in blockedIps:
+        if blockedIps[ip] > time:
+            seconds = (blockedIps[ip] - time).seconds  
+            response = make_response(f"Nop, you still in the BlockList, Please count the time, come back in {seconds} seconds😒", 429)
             response.headers["X-Content-Type-Options"] = "nosniff"
-            return response 
+            return response
         else:
-            blockedIps.pop(current_ip)
+            del blockedIps[ip]
+    
+    if ip not in requestRecords:
+        requestRecords[ip] = [time, 1]
+    else:
+        firstRequestTime, requestCount = requestRecords[ip]
+        if time - firstRequestTime < datetime.timedelta(seconds=10):
+            requestCount += 1
+            if requestCount > 50:
+                blockTime = time + datetime.timedelta(seconds=30)   
+                blockedIps[ip] = blockTime
+                return make_response(f"You have wayyyyyyyyy too many requests, I will block you until{blockTime}🤬 Do Not Attack my WEBSITE!!!!!!", 429)
+            requestRecords[ip] = [firstRequestTime, requestCount]
+        else:
+            requestRecords[ip] = [time, 1]
 
 
 
@@ -111,12 +122,6 @@ def response():
     new_response.headers["X-Content-Type-Options"] = "nosniff"
     new_response.headers["Content-Type"] = "text/html; charset=utf-8"
     return new_response
-
-@app.errorhandler(429)
-def ratelimit_handler(e):
-    ip=request.headers.get('X-Real-IP', request.remote_addr)
-    blockedIps[ip] = datetime.datetime.now() + datetime.timedelta(seconds=30)
-    return make_response("Too many requests", 429)
 
 
 @app.route('/static/<subpath>')

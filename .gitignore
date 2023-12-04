@@ -2,3 +2,5 @@
 static/images
 testing/
 token.json
+wserver.py
+zserver.py
