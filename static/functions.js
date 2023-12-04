@@ -119,7 +119,7 @@ function loginAccount() {
 }
 
 //objective2
-function sendVerificationEmail() {
+function sendVerificationRequest() {
   const email = document.getElementById("email").value;
 
   if (email.trim() === "") {

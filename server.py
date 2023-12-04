@@ -12,6 +12,7 @@ import uuid
 import datetime
 import base64
 
+import google.auth
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from email.mime.multipart import MIMEMultipart
@@ -53,7 +54,6 @@ MIME_TYPES = {
     '.json': 'application/json',
     '.png': 'image/png'
 }
-
 
 def isAuthenticated(Request):
     cookies = Request.cookies

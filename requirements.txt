@@ -3,3 +3,5 @@ bcrypt
 flask
 flask_socketio
 eventlet
+flask_limiter
+google-api-python-client
