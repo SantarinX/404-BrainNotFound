@@ -1,4 +1,5 @@
 let socket= io(window.location.origin,{ transports: ['websocket'] });
+let waitingInterval;
 
 function pageDisplay(name) {
   document.getElementById(name).style.display = "block";
@@ -62,9 +63,15 @@ function showNotification(message, isSuccess) {
 function registerAccount() {
   const username = document.getElementById("newUsername").value;
   const password = document.getElementById("newPassword").value;
+  const email = document.getElementById("email").value;
 
   if(username.trim() === "" || password.trim() === ""){
     showNotification("Username or Password cannot be empty", false);
+    return;
+  }
+
+  let failed=sendVerificationEmail();
+  if(failed===false){
     return;
   }
 
@@ -72,10 +79,18 @@ function registerAccount() {
 
   request.onload = function () {
     if (request.status === 200) {
-      showNotification("Register Successfully", true);
-      registerModal.style.display = "none";
-      document.getElementById("newUsername").value = "";
-      document.getElementById("newPassword").value = "";
+      closePage("registerModal");
+      pageDisplay("VerificationModal");
+      let time=60;
+      waitingInterval = setInterval(function(){
+      document.getElementById("waitingMessage").textContent ="Please check your email for verification link, you can resend the email in "+ time +" seconds";
+      time--;
+      if(time<0){
+        clearInterval(waitingInterval);
+        document.getElementById("waitingMessage").textContent ="you can keep waiting for the verification link or, you can resend the email now";
+        document.getElementById("resendButton").removeAttribute("style");
+      }
+      },1000);
     } else {
       showNotification("Register Failed", false);
     }
@@ -83,8 +98,9 @@ function registerAccount() {
 
   request.open("POST", "/register");
   request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  request.send(`newUsername=${username}&newPassword=${password}`);
+  request.send(`newUsername=${username}&newPassword=${password}&email=${email}`);
 }
+
 
 function loginAccount() {
   const username = document.getElementById("username").value;
@@ -103,11 +119,10 @@ function loginAccount() {
       loginModal.style.display = "none";
       document.getElementById("username").value = "";
       document.getElementById("password").value = "";
-
-      user_name = this.responseText;
+      let user_name = this.responseText;
 
       document.getElementById("welcome_user").innerHTML =
-        "Welcome! " + this.responseText;
+        "Welcome! " + user_name;
     } else if (request.status === 404) {
       showNotification("Login Failed", false);
       document.getElementById("password").value = "";
@@ -117,6 +132,49 @@ function loginAccount() {
   request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   request.send(`username=${username}&password=${password}`);
 }
+
+//objective2
+function sendVerificationEmail() {
+  const email = document.getElementById("email").value;
+  var emailValid = /^\w+@[a-zA-Z0-9.-]+\.\w+$/i;
+
+  if (email.trim() === "") {
+    showNotification("Email cannot be empty", false);
+    return false;
+  }
+
+  if (!emailValid.test(email)) {
+    showNotification("Please enter a valid email address", false);
+    return false;
+  }
+
+  const request = new XMLHttpRequest();  
+  
+  request.onload = function () {
+    if (request.status === 200) {
+    }
+  };
+
+  request.open("POST", "/verification");
+  request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  request.send(`email=${email}`);
+}
+
+socket.on('verification_response', function(data) {
+  if (data.status === 'success') {
+    let email = document.getElementById("email").value;
+    let serverEmail = data.email;
+    if (email === serverEmail) {
+      clearInterval(waitingInterval);
+      document.getElementById("closeWaitingpage").removeAttribute("style");
+      document.getElementById("waitingTitle").textContent = "Email Verified";
+      document.getElementById("waitingMessage").textContent = "you have successfully verified your email, you can close this page now";
+      document.getElementById("resendButton").style.display = "none";
+      
+      document.getElementById("registerForm").reset();
+    }
+  }
+});
 
 function updatePost() {
   const request = new XMLHttpRequest();
@@ -259,6 +317,9 @@ function getWins() {
   };
 }
 
+
+
+
 function displayAuctionsInModal(auctionData, type) {
 
   let auctionListContainer = "";
@@ -323,3 +384,4 @@ socket.on('winner_response', function(data) {
 socket.on('update_response', function() {
   updatePost();
 });
+

@@ -39,16 +39,30 @@
             <span id="registerClose" class="close" onclick="closePage('registerModal')">X</span>
             <h2>Register</h2>
             <div class="form-container">
-                <form>
+                <form id="registerForm">
                     <label for="newUsername">New Username:</label>
                     <input type="text" id="newUsername" name="newUsername" required><br>
 
                     <label for="newPassword">New Password:</label>
                     <input type="password" id="newPassword" name="newPassword" required><br>
-                    
-                    <input type="submit" value="Rgeister" onclick="registerAccount(); return false">
-                </form>
 
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required><br>
+
+                    <input type="submit" id="registerSubmit" value="Rgeister" onclick="registerAccount(); return false">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="VerificationModal" class="modal">
+        <div class="modal-content">
+            <span id="waitingVerificationClose" class="close" onclick="closePage('VerificationModal')">X</span>
+            <h2 id="waitingTitle">Waiting for Verification</h2>
+            <div class="form-container">
+                <p id="waitingMessage"></p>
+                <button id="resendButton" onclick="resendVerification()" style="display: none;">Resend Verification</button>
+                <button id="closeWaitingpage" onclick="closePage('VerificationModal')" style="display: none;">Close</button>
             </div>
         </div>
     </div>
