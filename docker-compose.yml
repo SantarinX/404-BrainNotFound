@@ -1,15 +1,21 @@
 version: '3'
 services:
+  nginx:
+    build: ./nginx
+    ports:
+    - '80:80'
+    - '443:443'
+
   database:
     image: mongo:4.2.5
     ports:
       - '27017:27017'
   
-  project3:
+  project4:
     build: .
     environment:
       - WAIT_HOST=mongo:27017
     ports:
-      - '8080:8080'
+      - '5000:5000'
 
   

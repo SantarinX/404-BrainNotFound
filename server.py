@@ -89,6 +89,7 @@ def send_verification_email(email, token):
 @app.before_request
 def nothing():
     ip = get_real_ip()
+    print("Current IP: "+ip)
     time = datetime.datetime.now()
 
     if ip in blockedIps:
