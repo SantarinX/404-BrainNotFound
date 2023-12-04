@@ -170,6 +170,8 @@ socket.on('verification_response', function(data) {
       document.getElementById("waitingTitle").textContent = "Email Verified";
       document.getElementById("waitingMessage").textContent = "you have successfully verified your email, you can close this page now";
       document.getElementById("resendButton").style.display = "none";
+      
+      document.getElementById("registerForm").reset();
     }
   }
 });
