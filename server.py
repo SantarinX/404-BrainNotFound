@@ -78,7 +78,12 @@ def send_verification_email(email, token):
     body = MIMEText(html_content, 'html')
     message.attach(body)
     #need implement more
-
+    rawMessage = base64.urlsafe_b64encode(message.as_bytes()).decode()
+    try:
+        service.users().messages().send(userId='me', body={'raw': rawMessage}).execute()
+        print(f"Verification email already sent!")
+    except Exception as e:
+        print(f"Error sending verification email: {e}")
 
 @app.before_request
 def checkIpLimit():
@@ -178,8 +183,10 @@ def register():
     # hash password
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode(), salt)
-    login_info_db.insert_one({"username": username, "password": hashed_password, "email": email})
-    response = make_response("Success", 200)
+    verification_token = str(uuid.uuid4())
+    login_info_db.insert_one({"username": username, "password": hashed_password, "email": email, "verified": False, "verification_token": verification_token})
+    send_verification_email(email, verification_token)
+    response = make_response("Registration successful. Check your email to verify.", 200)
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 
@@ -198,17 +205,16 @@ def verification():
     return response
 
 @app.route('/check', methods=['GET'])
-
 def check_verification():
     token = request.args.get('token')
-    if token in all_tokens:
-        response = make_response({'message': 'Your email has been verified!'})
-        response.mimetype = "application/json"
-        return response
+    user = login_info_db.find_one({"verification_token": token})
+    if user:
+        login_info_db.update_one({"_id": user["_id"]}, {"$set": {"verified": True, "verification_token": None}})
+        response = make_response({'message': 'Your email has been verified!'}, 200)
     else:
         response = make_response({'message': 'Verification link is invalid or has expired'}, 400)
-        response.mimetype = "application/json"
-        return response
+    response.mimetype = "application/json"
+    return response
 
 @app.route('/post-history', methods=["GET"])
 def showingPost():
