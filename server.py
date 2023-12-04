@@ -90,7 +90,7 @@ def send_verification_email(email, token):
 
 @app.before_request
 def checkIpLimit():
-    current_ip = get_remote_address()
+    current_ip = request.headers.get('X-Real-IP', request.remote_addr)
     print("Current ip: " + current_ip)
     if current_ip in blockedIps:
         currentTime = datetime.datetime.now()
@@ -114,7 +114,7 @@ def response():
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    ip=get_remote_address()
+    ip=request.headers.get('X-Real-IP', request.remote_addr)
     blockedIps[ip] = datetime.datetime.now() + datetime.timedelta(seconds=30)
     return make_response("Too many requests", 429)
 
