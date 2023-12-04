@@ -57,6 +57,7 @@ label {
 
 input[type="text"],
 input[type="password"],
+input[type="email"],
 textarea {
     width: 50%;
     padding: 10px;
@@ -172,4 +173,5 @@ input[type="submit"] {
 #verifyEmailButton {
     padding: 5px 10px;
     margin-left: 10px;
+    position: absolute;
   }

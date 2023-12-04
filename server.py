@@ -11,6 +11,7 @@ from pymongo import MongoClient
 import uuid
 import datetime
 import base64
+import secrets
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -30,7 +31,7 @@ limiter = Limiter(
 
 
 blockedIps = {}
-all_tokens = []
+all_tokens = {}
 
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, transports=['websocket'],cors_allowed_origins="*")
@@ -67,17 +68,19 @@ def isAuthenticated(Request):
     return False
 
 def send_verification_email(email, token):
+    print(f"localhost:5000/check?token={token}")
     credentials = Credentials.from_authorized_user_file('token.json')
     service = build('gmail', 'v1', credentials=credentials)
     message = MIMEMultipart()
     message['to'] = email
-    message['From'] = '404brainnotfound312@gmail.com'
     message['subject'] = "Email Verification"
     url = f'https://www.404brainnotfound.top/check?token={token}'
+
     html_content = f'Please confirm your email by clicking on the link below:<br><a href="{url}">Verify my email</a>'
     body = MIMEText(html_content, 'html')
     message.attach(body)
-    #need implement more
+
+
     rawMessage = base64.urlsafe_b64encode(message.as_bytes()).decode()
     try:
         service.users().messages().send(userId='me', body={'raw': rawMessage}).execute()
@@ -98,8 +101,6 @@ def checkIpLimit():
             return response 
         else:
             blockedIps.pop(current_ip)
-
-
 
 
 
@@ -152,6 +153,7 @@ def login():
     body = request.form.to_dict()
     username = body["username"]
     password = body["password"]
+
     user = login_info_db.find_one({"username": username})
     if user is None:
         response = make_response("User not found", 404)
@@ -184,7 +186,7 @@ def register():
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode(), salt)
     login_info_db.insert_one({"username": username, "password": hashed_password, "email": email})
-    response = make_response("Success", 200)
+    return make_response("Success", 200)
 
 
 
@@ -193,7 +195,7 @@ def register():
 def verification():
     email = request.form.get('email')
     token = str(uuid.uuid4())
-    all_tokens.append(token)
+    all_tokens[token] = email
     send_verification_email(email, token)
 
     response = make_response({'message': 'Verification email sent'})
@@ -201,17 +203,13 @@ def verification():
     return response
 
 @app.route('/check', methods=['GET'])
-
 def check_verification():
     token = request.args.get('token')
     if token in all_tokens:
-        response = make_response({'message': 'Your email has been verified!'})
-        response.mimetype = "application/json"
-        return response
+        socketio.emit('verification_response', {'status': 'success','email':f'{all_tokens[token]}'}, broadcast=True)
+        return "You have successfully verified your email. You can now close this page."
     else:
-        response = make_response({'message': 'Verification link is invalid or has expired'}, 400)
-        response.mimetype = "application/json"
-        return response
+        return "Verification link is invalid", 400
 
 @app.route('/post-history', methods=["GET"])
 def showingPost():
@@ -237,7 +235,6 @@ def showingPost():
 
     response = make_response(post_json, 200)
     response.headers["X-Content-Type-Options"] = "nosniff"
-
     return response
 
 
@@ -451,4 +448,4 @@ def auction_winner(auctionItem):
         )
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=8080)
+    socketio.run(app, host="0.0.0.0", port=5000)

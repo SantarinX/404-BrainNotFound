@@ -48,10 +48,21 @@
 
                     <label for="email">Email:</label>
                     <input type="email" id="email" name="email" required><br>
-                    <button type="button" id="verifyEmailButton" onclick="sendVerificationRequest()">Verify</button><br>
 
-                    <input type="submit" value="Rgeister" onclick="registerAccount(); return false">
+                    <input type="submit" id="registerSubmit" value="Rgeister" onclick="registerAccount(); return false">
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="VerificationModal" class="modal">
+        <div class="modal-content">
+            <span id="waitingVerificationClose" class="close" onclick="closePage('VerificationModal')">X</span>
+            <h2 id="waitingTitle">Waiting for Verification</h2>
+            <div class="form-container">
+                <p id="waitingMessage"></p>
+                <button id="resendButton" onclick="resendVerification()" style="display: none;">Resend Verification</button>
+                <button id="closeWaitingpage" onclick="closePage('VerificationModal')" style="display: none;">Close</button>
             </div>
         </div>
     </div>
